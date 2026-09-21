@@ -24,14 +24,17 @@ export default function HomePage() {
           <Link to="/projects">
             <Button variant="ghost">Browse open projects</Button>
           </Link>
+          <Link to="/login">
+            <Button variant="ghost">Viva demo login</Button>
+          </Link>
         </div>
       </section>
       <section className="border-t-2 border-ink/10 bg-white/70">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-14 md:grid-cols-3">
           {[
-            ['01', 'Post with a budget', 'Clients describe the work, skills, and a rupee range. No mystery RFPs.', 'bg-teal text-white'],
+            ['01', 'Post with a budget', 'Clients describe the work, skills, and a rupee range. Split a fixed job into 2–3 milestones, or cap an hourly desk.', 'bg-teal text-white'],
             ['02', 'Propose once', 'Freelancers send one bid per project. Clients hire. Everyone else is released.', 'bg-coral text-white'],
-            ['03', 'Hold, then release', 'Funds sit in simulated escrow until the client accepts the submitted work.', 'bg-saffron text-ink'],
+            ['03', 'Hold, then release', 'Funds sit in simulated escrow. Release the whole job, one milestone, or approved hours.', 'bg-saffron text-ink'],
           ].map(([n, title, body, tone]) => (
             <div key={n} className={`rounded-3xl p-6 shadow-[8px_8px_0_rgba(28,18,8,0.15)] ${tone}`}>
               <p className="text-xs font-bold tracking-[0.2em] opacity-80">{n}</p>
@@ -40,6 +43,25 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <h2 className="font-display text-4xl">Five-minute viva beat</h2>
+        <p className="mt-2 max-w-2xl text-muted">
+          Password for every seeded account is <code className="rounded-md bg-saffron px-1.5 py-0.5 font-bold">Password123!</code>
+        </p>
+        <ol className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            ['Priya (client)', 'priya@freelancehub.dev — open dashboard is due soon. Active work has Scan MVP submitted; release that slice.'],
+            ['Aisha (talent)', 'aisha@freelancehub.dev — pending bid on the logistics dashboard plus the inventory contract.'],
+            ['Arjun (client)', 'arjun@freelancehub.dev — completed SEO job with a review already on file.'],
+            ['Admin', 'admin@freelancehub.dev — contracts, escrow column, reports, and the audit log.'],
+          ].map(([title, body]) => (
+            <li key={title} className="rounded-3xl border-2 border-ink/10 bg-white p-5">
+              <p className="font-display text-2xl">{title}</p>
+              <p className="mt-2 text-sm text-muted">{body}</p>
+            </li>
+          ))}
+        </ol>
       </section>
     </PublicLayout>
   )
