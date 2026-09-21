@@ -29,8 +29,11 @@ function activityItems(contract, payment) {
 function escrowLabel(payment) {
   if (!payment) return ''
   const released = payment.releasedAmount || (payment.status === 'released' ? payment.amount : 0)
-  if (released > 0 && released < payment.amount) return `partial · ${inr(released)} / ${inr(payment.amount)}`
-  return `${payment.status} · ${inr(released)} / ${inr(payment.amount)}`
+  const held = payment.status === 'held' ? Math.max(0, payment.amount - (payment.releasedAmount || 0)) : 0
+  if (payment.status === 'refunded') return `refunded · ${inr(payment.amount)}`
+  if (payment.status === 'held' && released > 0) return `partial · ${inr(released)} released · ${inr(held)} held`
+  if (payment.status === 'held') return `held · ${inr(held)}`
+  return `released · ${inr(released)}`
 }
 
 export default function WorkPage() {
