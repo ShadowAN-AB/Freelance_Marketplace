@@ -9,6 +9,7 @@ export default defineConfig({
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
   },
   server: {
+    host: true,
     port: 5178,
     proxy: {
       '/api': 'http://localhost:5001',
