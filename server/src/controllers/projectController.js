@@ -92,8 +92,15 @@ const listProjects = asyncHandler(async (req, res) => {
     filter.deadline = { $gte: new Date(), $lte: soon };
   }
 
+  const sort =
+    req.query.sort === 'budget'
+      ? { budgetMax: -1 }
+      : req.query.sort === 'deadline'
+        ? { deadline: 1 }
+        : { createdAt: -1 };
+
   const [rows, total] = await Promise.all([
-    Project.find(filter).populate(populateClient).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Project.find(filter).populate(populateClient).sort(sort).skip(skip).limit(limit),
     Project.countDocuments(filter),
   ]);
   const data = await withProposalCounts(rows);

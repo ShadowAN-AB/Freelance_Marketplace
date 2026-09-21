@@ -13,9 +13,10 @@ export default function BrowseProjectsPage() {
   const category = params.get('category') || ''
   const pricingType = params.get('pricingType') || ''
   const dueSoon = params.get('dueSoon') === '1'
+  const sort = params.get('sort') || 'newest'
   const page = Number(params.get('page') || 1)
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', q, category, pricingType, dueSoon, page],
+    queryKey: ['projects', q, category, pricingType, dueSoon, sort, page],
     queryFn: async () =>
       (
         await api.get('/projects', {
@@ -24,6 +25,7 @@ export default function BrowseProjectsPage() {
             category: category || undefined,
             pricingType: pricingType || undefined,
             dueSoon: dueSoon || undefined,
+            sort: sort === 'newest' ? undefined : sort,
             page,
             status: 'open',
           },
@@ -32,7 +34,7 @@ export default function BrowseProjectsPage() {
   })
 
   function update(next) {
-    const merged = { q, category, pricingType, dueSoon: dueSoon ? '1' : '', page: String(page), ...next }
+    const merged = { q, category, pricingType, dueSoon: dueSoon ? '1' : '', sort, page: String(page), ...next }
     const sp = new URLSearchParams()
     Object.entries(merged).forEach(([k, v]) => {
       if (v) sp.set(k, String(v))
@@ -74,6 +76,15 @@ export default function BrowseProjectsPage() {
             <input type="checkbox" checked={dueSoon} onChange={(e) => update({ dueSoon: e.target.checked ? '1' : '', page: '1' })} />
             Due in 7 days
           </label>
+          <select
+            className="rounded-xl border-2 border-line bg-white px-3 py-2.5"
+            value={sort}
+            onChange={(e) => update({ sort: e.target.value, page: '1' })}
+          >
+            <option value="newest">Newest</option>
+            <option value="budget">Highest budget</option>
+            <option value="deadline">Due soonest</option>
+          </select>
           </div>
           <SaveSearchButton kind="projects" params={{ q, category, dueSoon }} />
         </div>

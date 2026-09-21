@@ -529,6 +529,30 @@ describe('FreelanceHub API', () => {
     assert.ok(fixed.body.data.every((p) => p.pricingType === 'fixed'));
   });
 
+  it('sorts open projects by max budget', async () => {
+    const client = await register('client', 'sort-client@test.dev');
+    const base = {
+      description: 'Need a React dashboard with auth, charts, and a Node API.',
+      category: 'Web Development',
+      skills: ['react'],
+      budgetMin: 5000,
+      deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+    };
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ ...base, title: 'Small budget listing for sort', budgetMax: 12000 })
+      .expect(201);
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ ...base, title: 'Large budget listing for sort', budgetMax: 48000 })
+      .expect(201);
+    const ranked = await request(app).get('/api/projects').query({ sort: 'budget', status: 'open' }).expect(200);
+    assert.equal(ranked.body.data[0].budgetMax, 48000);
+    assert.equal(ranked.body.data[1].budgetMax, 12000);
+  });
+
   it('counts pending proposals and returns similar open projects', async () => {
     const client = await register('client', 'count-client@test.dev');
     const other = await register('client', 'count-other@test.dev');
