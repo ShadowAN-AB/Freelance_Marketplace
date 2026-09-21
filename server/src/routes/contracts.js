@@ -37,7 +37,7 @@ router.post(
 router.post('/:id/request-revision', protect, authorize('client'), requireVerified, validate(revisionSchema), requestRevision);
 router.post('/:id/complete', protect, authorize('client'), requireVerified, completeContract);
 router.post('/:id/cancel', protect, authorize('client', 'freelancer'), requireVerified, validate(cancelSchema), cancelContract);
-router.post('/:id/reviews', protect, authorize('client', 'freelancer'), validate(reviewSchema), createReview);
+router.post('/:id/reviews', protect, authorize('client', 'freelancer'), requireVerified, validate(reviewSchema), createReview);
 router.post(
   '/:id/milestones/:mid/submit-work',
   protect,

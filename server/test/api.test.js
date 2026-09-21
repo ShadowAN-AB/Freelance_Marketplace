@@ -9,8 +9,10 @@ const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 const request = require('supertest');
+const bcrypt = require('bcryptjs');
 const { connectDb } = require('../src/config/db');
 const { createApp } = require('../src/server');
+const User = require('../src/models/User');
 
 let app;
 
@@ -165,6 +167,15 @@ describe('FreelanceHub API', () => {
       .set('Authorization', `Bearer ${client.body.token}`)
       .expect(200);
     assert.equal(done.body.contract.status, 'completed');
+
+    await request(app)
+      .post(`/api/contracts/${contractId}/reviews`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ rating: 5, comment: 'Great work on this dashboard job.' })
+      .expect(201);
+    const reviews = await request(app).get(`/api/users/${freelancer.body.user._id}/reviews`).expect(200);
+    assert.equal(reviews.body.data.length, 1);
+    assert.equal(reviews.body.data[0].rating, 5);
 
     const pay = await request(app)
       .get('/api/payments/me')
@@ -683,5 +694,133 @@ describe('FreelanceHub API', () => {
       .set('Authorization', `Bearer ${outsider.body.token}`)
       .send({ projectId: project.body.project._id, userId: freelancer.body.user._id })
       .expect(403);
+  });
+
+  it('lets admins read stats and forbids freelancers', async () => {
+    const freelancer = await register('freelancer', 'admin-free@test.dev');
+    await request(app)
+      .get('/api/admin/stats')
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .expect(403);
+
+    const email = 'admin-stats@test.dev';
+    await User.create({
+      name: 'Test Admin',
+      email,
+      password: await bcrypt.hash('Password123!', 12),
+      role: 'admin',
+      emailVerified: true,
+    });
+    const admin = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'Password123!' })
+      .expect(200);
+    const stats = await request(app)
+      .get('/api/admin/stats')
+      .set('Authorization', `Bearer ${admin.body.token}`)
+      .expect(200);
+    assert.ok(typeof stats.body.userCount === 'number');
+  });
+
+  it('rejects a pending bid', async () => {
+    const client = await register('client', 'reject-client@test.dev');
+    const freelancer = await register('freelancer', 'reject-free@test.dev');
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Reject a pending bid on this listing',
+        description: 'Need a React dashboard with auth, charts, and a Node API.',
+        category: 'Web Development',
+        skills: ['react'],
+        budgetMin: 10000,
+        budgetMax: 20000,
+        deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+      })
+      .expect(201);
+    const proposal = await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'I have shipped similar ops dashboards and can start this week.',
+        bidAmount: 15000,
+        estimatedDays: 12,
+      })
+      .expect(201);
+    const rejected = await request(app)
+      .post(`/api/proposals/${proposal.body.proposal._id}/reject`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(rejected.body.proposal.status, 'rejected');
+  });
+
+  it('creates a report that admins can list', async () => {
+    const client = await register('client', 'report-client@test.dev');
+    const freelancer = await register('freelancer', 'report-free@test.dev');
+    const created = await request(app)
+      .post('/api/reports')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        targetType: 'user',
+        targetId: freelancer.body.user._id,
+        reason: 'This bid looks like spam to me',
+      })
+      .expect(201);
+    assert.ok(created.body.report._id);
+
+    const email = 'admin-reports@test.dev';
+    await User.create({
+      name: 'Reports Admin',
+      email,
+      password: await bcrypt.hash('Password123!', 12),
+      role: 'admin',
+      emailVerified: true,
+    });
+    const admin = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password: 'Password123!' })
+      .expect(200);
+    const listed = await request(app)
+      .get('/api/admin/reports')
+      .set('Authorization', `Bearer ${admin.body.token}`)
+      .expect(200);
+    assert.equal(listed.body.data.length, 1);
+  });
+
+  it('blocks unverified clients from posting projects when verify is on', async () => {
+    await User.create({
+      name: 'Unverified Client',
+      email: 'unverified@test.dev',
+      password: await bcrypt.hash('Password123!', 12),
+      role: 'client',
+      emailVerified: false,
+    });
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'unverified@test.dev', password: 'Password123!' })
+      .expect(200);
+
+    const prevSkip = process.env.SKIP_EMAIL_VERIFY;
+    const prevEnv = process.env.NODE_ENV;
+    process.env.SKIP_EMAIL_VERIFY = 'false';
+    process.env.NODE_ENV = 'development';
+    try {
+      await request(app)
+        .post('/api/projects')
+        .set('Authorization', `Bearer ${login.body.token}`)
+        .send({
+          title: 'Should not post this unverified project title',
+          description: 'Need a React dashboard with auth, charts, and a Node API.',
+          category: 'Web Development',
+          skills: ['react'],
+          budgetMin: 10000,
+          budgetMax: 20000,
+          deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+        })
+        .expect(403);
+    } finally {
+      process.env.SKIP_EMAIL_VERIFY = prevSkip;
+      process.env.NODE_ENV = prevEnv;
+    }
   });
 });

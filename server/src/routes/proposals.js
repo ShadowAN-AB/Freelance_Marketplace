@@ -19,8 +19,8 @@ projectRouter.get('/', protect, authorize('client', 'admin'), listProjectProposa
 const router = express.Router();
 router.get('/me', protect, authorize('freelancer'), myProposals);
 router.post('/:id/accept', protect, authorize('client'), requireVerified, acceptProposal);
-router.post('/:id/reject', protect, authorize('client'), rejectProposal);
-router.post('/:id/withdraw', protect, authorize('freelancer'), withdrawProposal);
-router.post('/:id/shortlist', protect, authorize('client'), toggleShortlist);
+router.post('/:id/reject', protect, authorize('client'), requireVerified, rejectProposal);
+router.post('/:id/withdraw', protect, authorize('freelancer'), requireVerified, withdrawProposal);
+router.post('/:id/shortlist', protect, authorize('client'), requireVerified, toggleShortlist);
 
 module.exports = { router, projectRouter };

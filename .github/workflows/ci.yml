@@ -51,6 +51,7 @@ jobs:
           LOG_LEVEL: silent
           SKIP_EMAIL_VERIFY: true
         run: |
+          npm --prefix server run seed
           npm --prefix server start &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:5001/health && break; sleep 1; done
           npx --prefix client playwright install --with-deps chromium

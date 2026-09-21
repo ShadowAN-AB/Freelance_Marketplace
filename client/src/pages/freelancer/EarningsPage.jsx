@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api'
 import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
@@ -42,15 +43,23 @@ export default function EarningsPage() {
       </div>
       {!data?.data?.length ? <div className="mt-8"><EmptyState title="No ledger yet" body={isClient ? 'Hired work appears here as held escrow, then released.' : 'Accepted work appears here as held, then released.'} /></div> : null}
       <ul className="mt-6 space-y-3">
-        {(data?.data || []).map((p) => (
-          <li key={p._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
-            <div>
-              <p className="font-semibold">{p.contractId?.projectId?.title || 'Contract'}</p>
-              <p className="text-sm text-muted">{inr(p.amount)}</p>
-            </div>
-            <StatusBadge status={p.status} />
-          </li>
-        ))}
+        {(data?.data || []).map((p) => {
+          const contractId = p.contractId?._id || p.contractId
+          return (
+            <li key={p._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
+              <div>
+                <p className="font-semibold">{p.contractId?.projectId?.title || 'Contract'}</p>
+                <p className="text-sm text-muted">{inr(p.amount)}</p>
+                {contractId ? (
+                  <Link to={`/app/work/${contractId}/invoice`} className="mt-1 inline-block text-sm font-bold text-teal">
+                    Invoice
+                  </Link>
+                ) : null}
+              </div>
+              <StatusBadge status={p.status} />
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
