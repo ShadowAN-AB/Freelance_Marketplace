@@ -26,6 +26,7 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 const reportRoutes = require('./routes/reports');
 const reviewRoutes = require('./routes/reviews');
+const { marketplaceStats } = require('./controllers/statsController');
 
 function createApp() {
   const origin = clientUrl();
@@ -55,6 +56,8 @@ function createApp() {
       env: process.env.NODE_ENV || 'development',
     });
   });
+
+  app.get('/api/stats', marketplaceStats);
 
   app.use('/api/auth', authRoutes);
   app.use('/api/freelancers', freelancerRoutes);

@@ -47,6 +47,14 @@ describe('FreelanceHub API', () => {
     assert.ok(login.body.token);
   });
 
+  it('returns public marketplace stats', async () => {
+    const stats = await request(app).get('/api/stats').expect(200);
+    assert.equal(typeof stats.body.openProjects, 'number');
+    assert.equal(typeof stats.body.freelancers, 'number');
+    assert.equal(typeof stats.body.completedContracts, 'number');
+    assert.equal(typeof stats.body.escrowHeld, 'number');
+  });
+
   it('enforces one proposal per project and allows rebid after withdraw', async () => {
     const client = await register('client', 'client@test.dev');
     const freelancer = await register('freelancer', 'free@test.dev');

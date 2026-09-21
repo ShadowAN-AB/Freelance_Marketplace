@@ -1,8 +1,16 @@
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
 import { Button } from '../../components/ui/Primitives'
+import { inr } from '../../lib/format'
+import api from '../../services/api'
 
 export default function HomePage() {
+  const stats = useQuery({
+    queryKey: ['marketplace-stats'],
+    queryFn: async () => (await api.get('/stats')).data,
+  })
+  const s = stats.data || {}
   return (
     <PublicLayout>
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
@@ -28,6 +36,12 @@ export default function HomePage() {
             <Button variant="ghost">Viva demo login</Button>
           </Link>
         </div>
+        <dl className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat label="Open projects" value={s.openProjects ?? '—'} />
+          <Stat label="Freelancers" value={s.freelancers ?? '—'} />
+          <Stat label="Jobs completed" value={s.completedContracts ?? '—'} />
+          <Stat label="Escrow held" value={s.escrowHeld != null ? inr(s.escrowHeld) : '—'} />
+        </dl>
       </section>
       <section className="border-t-2 border-ink/10 bg-white/70">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-14 md:grid-cols-3">
@@ -64,5 +78,14 @@ export default function HomePage() {
         </ol>
       </section>
     </PublicLayout>
+  )
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="rounded-3xl border-2 border-ink/10 bg-white p-4 shadow-[5px_5px_0_rgba(28,18,8,0.1)]">
+      <dt className="text-xs font-bold uppercase tracking-[0.16em] text-muted">{label}</dt>
+      <dd className="font-display mt-1 text-3xl">{value}</dd>
+    </div>
   )
 }
