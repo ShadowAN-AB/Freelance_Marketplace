@@ -218,55 +218,6 @@ async function seed() {
       pricingType: 'hourly',
     },
   ]);
-    {
-      clientId: priya._id,
-      title: 'React dashboard for logistics ops',
-      description:
-        'We need a React dashboard that shows live truck status, delayed shipments, and a simple exception queue. Node API already exists. Prefer someone who has shipped ops tools, not marketing sites.',
-      category: 'Web Development',
-      skills: ['react', 'node.js', 'mongodb'],
-      budgetMin: 40000,
-      budgetMax: 70000,
-      deadline: deadline(28),
-      status: 'open',
-    },
-    {
-      clientId: priya._id,
-      title: 'Brand landing page for Northline',
-      description:
-        'A sharp one-page site for a Series A logistics company. Strong typography, restrained motion, and a hiring desk feel rather than generic SaaS purple.',
-      category: 'UI/UX',
-      skills: ['ui/ux', 'figma', 'prototyping'],
-      budgetMin: 25000,
-      budgetMax: 40000,
-      deadline: deadline(18),
-      status: 'open',
-    },
-    {
-      clientId: priya._id,
-      title: 'Mobile inventory companion app',
-      description:
-        'React Native (or well-justified Flutter) app for warehouse staff: scan SKUs, mark exceptions, sync when back online. Hired and in progress.',
-      category: 'Mobile',
-      skills: ['react', 'javascript', 'node.js'],
-      budgetMin: 80000,
-      budgetMax: 120000,
-      deadline: deadline(45),
-      status: 'in_progress',
-    },
-    {
-      clientId: arjun._id,
-      title: 'SEO blog series for a design studio',
-      description:
-        'Eight long-form articles on hiring independent designers in India. Research, outlines, drafts, and meta. Completed.',
-      category: 'Writing',
-      skills: ['writing', 'seo', 'content strategy'],
-      budgetMin: 18000,
-      budgetMax: 24000,
-      deadline: deadline(-10),
-      status: 'completed',
-    },
-  ]);
 
   const pDashAisha = await Proposal.create({
     projectId: dash._id,
