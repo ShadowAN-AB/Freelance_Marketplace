@@ -176,9 +176,14 @@ function ClientDash() {
     queryFn: async () => (await api.get('/projects', { params: { mine: 'true', limit: 50 } })).data,
   })
   const payments = useQuery({ queryKey: ['payments-me'], queryFn: async () => (await api.get('/payments/me')).data })
+  const contracts = useQuery({
+    queryKey: ['contracts-me'],
+    queryFn: async () => (await api.get('/contracts/me', { params: { limit: 50 } })).data,
+  })
   if (projects.isLoading) return <Spinner />
   const list = projects.data?.data || []
   const reminders = list.filter((p) => (p.status === 'open' || p.status === 'in_progress') && dueSoon(p.deadline))
+  const activeWork = (contracts.data?.data || []).filter((c) => c.status === 'active')
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -211,6 +216,25 @@ function ClientDash() {
                 <p className="text-sm text-muted">Deadline {formatDate(p.deadline)}</p>
               </li>
             ))}
+          </ul>
+        </section>
+      ) : null}
+      {activeWork.length ? (
+        <section className="mt-10">
+          <h2 className="font-display text-3xl">Active work</h2>
+          <ul className="mt-3 space-y-2">
+            {activeWork.map((c) => {
+              const submitted = (c.milestones || []).filter((m) => m.status === 'submitted')
+              const next = submitted[0] || (c.milestones || []).find((m) => m.status === 'pending')
+              return (
+                <li key={c._id} className="rounded-2xl border-2 border-ink/10 bg-white p-4">
+                  <Link to="/app/work" className="font-display text-2xl">{c.projectId?.title || 'Contract'}</Link>
+                  <p className="text-sm text-muted">
+                    {submitted.length ? `Ready to release · ${submitted[0].title}` : next ? `Next · ${next.title}` : 'Open Active work to approve or release'}
+                  </p>
+                </li>
+              )
+            })}
           </ul>
         </section>
       ) : null}
