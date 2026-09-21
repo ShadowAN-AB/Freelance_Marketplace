@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
@@ -143,7 +144,23 @@ async function seed() {
 
   const deadline = (days) => new Date(Date.now() + days * 86400000);
 
-  const [dash, landing, inventory, seo, hourlyOps] = await Project.create([
+  const uploadDir = path.join(__dirname, '../../uploads');
+  fs.mkdirSync(uploadDir, { recursive: true });
+  const notesName = 'scan-mvp-notes.txt';
+  fs.writeFileSync(
+    path.join(uploadDir, notesName),
+    [
+      'Scan MVP — Northline warehouse',
+      '',
+      'Device queues barcode scans locally when wifi drops.',
+      'Low-confidence barcodes show amber, not red.',
+      'Exception photos compress on device before sync.',
+      'Ready for Priya to release this slice.',
+      '',
+    ].join('\n')
+  );
+
+  const [dash, landing, inventory, seo, hourlyOps, hourlyDesk] = await Project.create([
     {
       clientId: priya._id,
       title: 'React dashboard for logistics ops',
@@ -217,6 +234,19 @@ async function seed() {
       status: 'open',
       pricingType: 'hourly',
     },
+    {
+      clientId: priya._id,
+      title: 'Warehouse Node pairing desk',
+      description:
+        'Hired hourly desk. Aisha logs pairing hours against an escrow cap. Approve the pending 4h entry in Active work.',
+      category: 'Web Development',
+      skills: ['node.js', 'express', 'mongodb'],
+      budgetMin: 8000,
+      budgetMax: 18000,
+      deadline: deadline(8),
+      status: 'in_progress',
+      pricingType: 'hourly',
+    },
   ]);
 
   const pDashAisha = await Proposal.create({
@@ -253,6 +283,14 @@ async function seed() {
     estimatedDays: 40,
     status: 'accepted',
   });
+  const hourlyProposal = await Proposal.create({
+    projectId: hourlyDesk._id,
+    freelancerId: aisha._id,
+    coverLetter: 'I already know the sync endpoints from the inventory job. Four hours should cover the retry queue.',
+    bidAmount: 18000,
+    estimatedDays: 4,
+    status: 'accepted',
+  });
   const seoProposal = await Proposal.create({
     projectId: seo._id,
     freelancerId: leo._id,
@@ -265,6 +303,9 @@ async function seed() {
   inventory.hiredProposalId = inventoryProposal._id;
   inventory.hiredFreelancerId = aisha._id;
   await inventory.save();
+  hourlyDesk.hiredProposalId = hourlyProposal._id;
+  hourlyDesk.hiredFreelancerId = aisha._id;
+  await hourlyDesk.save();
   seo.hiredProposalId = seoProposal._id;
   seo.hiredFreelancerId = leo._id;
   await seo.save();
@@ -285,12 +326,31 @@ async function seed() {
         status: 'submitted',
         workSubmittedAt: new Date(Date.now() - 1 * 86400000),
         deliverables: [
-          { originalName: 'scan-mvp-notes.txt', url: '/uploads/.gitkeep', uploadedAt: new Date() },
+          { originalName: notesName, url: `/uploads/${notesName}`, uploadedAt: new Date() },
         ],
       },
       {
         title: 'Offline sync',
         amount: 60000,
+        status: 'pending',
+      },
+    ],
+  });
+  const hourlyContract = await Contract.create({
+    projectId: hourlyDesk._id,
+    clientId: priya._id,
+    freelancerId: aisha._id,
+    proposalId: hourlyProposal._id,
+    amount: 18000,
+    pricingType: 'hourly',
+    hourlyRate: 1800,
+    status: 'active',
+    startDate: new Date(Date.now() - 3 * 86400000),
+    timeEntries: [
+      {
+        hours: 4,
+        note: 'Retry queue + timeout on the warehouse sync worker.',
+        date: new Date(Date.now() - 1 * 86400000),
         status: 'pending',
       },
     ],
@@ -323,6 +383,14 @@ async function seed() {
       clientId: priya._id,
       freelancerId: aisha._id,
       amount: 96000,
+      releasedAmount: 0,
+      status: 'held',
+    },
+    {
+      contractId: hourlyContract._id,
+      clientId: priya._id,
+      freelancerId: aisha._id,
+      amount: 18000,
       releasedAmount: 0,
       status: 'held',
     },
@@ -418,6 +486,13 @@ async function seed() {
       link: '/app/work',
     },
     {
+      userId: priya._id,
+      type: 'work_submitted',
+      title: 'Hours logged',
+      body: 'Aisha Khan logged 4h on Warehouse Node pairing desk',
+      link: '/app/work',
+    },
+    {
       userId: aisha._id,
       type: 'proposal_accepted',
       title: 'Proposal accepted',
@@ -426,7 +501,7 @@ async function seed() {
     },
   ]);
 
-  await Report.create({
+  const report = await Report.create({
     reporterId: kabir._id,
     targetType: 'project',
     targetId: dash._id,
@@ -435,12 +510,43 @@ async function seed() {
     status: 'open',
   });
 
+  await AuditLog.create([
+    {
+      actorId: priya._id,
+      action: 'contract_hire',
+      targetType: 'contract',
+      targetId: String(inventoryContract._id),
+      meta: { project: inventory.title },
+    },
+    {
+      actorId: aisha._id,
+      action: 'milestone_submit',
+      targetType: 'contract',
+      targetId: String(inventoryContract._id),
+      meta: { title: 'Scan MVP' },
+    },
+    {
+      actorId: priya._id,
+      action: 'contract_hire',
+      targetType: 'contract',
+      targetId: String(hourlyContract._id),
+      meta: { project: hourlyDesk.title, pricingType: 'hourly' },
+    },
+    {
+      actorId: kabir._id,
+      action: 'report_create',
+      targetType: 'project',
+      targetId: String(dash._id),
+      meta: { reason: report.reason },
+    },
+  ]);
+
   console.log('Seeded FreelanceHub demo data.');
   console.log('Password for all accounts: Password123!');
   console.log('Admin  admin@freelancehub.dev');
   console.log('Client priya@freelancehub.dev  arjun@freelancehub.dev');
   console.log('Talent aisha@freelancehub.dev  kabir@freelancehub.dev  meera@freelancehub.dev  leo@freelancehub.dev');
-  console.log('Demo beat: Priya → due-soon landing, dashboard milestones, Active work → Release Scan MVP.');
+  console.log('Demo beat: Priya → Release Scan MVP, then Approve 4h on the hourly desk. Admin → Audit.');
   await mongoose.disconnect();
 }
 

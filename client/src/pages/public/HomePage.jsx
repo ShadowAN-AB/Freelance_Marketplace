@@ -65,7 +65,7 @@ export default function HomePage() {
         </p>
         <ol className="mt-6 grid gap-4 md:grid-cols-2">
           {[
-            ['Priya (client)', 'priya@freelancehub.dev — open dashboard is due soon. Active work has Scan MVP submitted; release that slice.'],
+            ['Priya (client)', 'priya@freelancehub.dev — Active work: release Scan MVP, then approve 4h on the hourly desk.'],
             ['Aisha (talent)', 'aisha@freelancehub.dev — pending bid on the logistics dashboard plus the inventory contract.'],
             ['Arjun (client)', 'arjun@freelancehub.dev — completed SEO job with a review already on file.'],
             ['Admin', 'admin@freelancehub.dev — contracts, escrow column, reports, and the audit log.'],

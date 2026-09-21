@@ -73,7 +73,8 @@ Password for every seeded account: `Password123!`
 3. Active work → filter Submitted → Release Scan MVP (₹36,000). Offline sync stays held.
 4. Payments → Download CSV for the held/released ledger.
 5. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
-6. Browse `/projects?pricingType=hourly` or sort by highest budget.
+6. Active work → hourly card → Approve 4h. Admin → Audit has hire/submit rows.
+7. Browse `/projects?pricingType=hourly` or sort by highest budget.
 
 ## Layout
 
