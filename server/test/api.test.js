@@ -492,4 +492,32 @@ describe('FreelanceHub API', () => {
       .send({ freelancerId: freelancer.body.user._id })
       .expect(201);
   });
+
+  it('filters open projects by pricing type', async () => {
+    const client = await register('client', 'price-client@test.dev');
+    const base = {
+      description: 'Need a React dashboard with auth, charts, and a Node API.',
+      category: 'Web Development',
+      skills: ['react'],
+      budgetMin: 10000,
+      budgetMax: 20000,
+      deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+    };
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ ...base, title: 'Fixed price listing for filter', pricingType: 'fixed' })
+      .expect(201);
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ ...base, title: 'Hourly pairing listing for filter', pricingType: 'hourly' })
+      .expect(201);
+    const hourly = await request(app).get('/api/projects').query({ pricingType: 'hourly', status: 'open' }).expect(200);
+    assert.equal(hourly.body.data.length, 1);
+    assert.ok(hourly.body.data.every((p) => p.pricingType === 'hourly'));
+    const fixed = await request(app).get('/api/projects').query({ pricingType: 'fixed', status: 'open' }).expect(200);
+    assert.equal(fixed.body.data.length, 1);
+    assert.ok(fixed.body.data.every((p) => p.pricingType === 'fixed'));
+  });
 });

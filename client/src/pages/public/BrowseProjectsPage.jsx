@@ -11,16 +11,18 @@ export default function BrowseProjectsPage() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') || ''
   const category = params.get('category') || ''
+  const pricingType = params.get('pricingType') || ''
   const dueSoon = params.get('dueSoon') === '1'
   const page = Number(params.get('page') || 1)
   const { data, isLoading } = useQuery({
-    queryKey: ['projects', q, category, dueSoon, page],
+    queryKey: ['projects', q, category, pricingType, dueSoon, page],
     queryFn: async () =>
       (
         await api.get('/projects', {
           params: {
             q: q || undefined,
             category: category || undefined,
+            pricingType: pricingType || undefined,
             dueSoon: dueSoon || undefined,
             page,
             status: 'open',
@@ -30,7 +32,7 @@ export default function BrowseProjectsPage() {
   })
 
   function update(next) {
-    const merged = { q, category, dueSoon: dueSoon ? '1' : '', page: String(page), ...next }
+    const merged = { q, category, pricingType, dueSoon: dueSoon ? '1' : '', page: String(page), ...next }
     const sp = new URLSearchParams()
     Object.entries(merged).forEach(([k, v]) => {
       if (v) sp.set(k, String(v))
@@ -43,7 +45,7 @@ export default function BrowseProjectsPage() {
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="font-display text-4xl">Open projects</h1>
         <div className="mt-6 flex flex-wrap items-end gap-3">
-          <div className="grid flex-1 gap-3 md:grid-cols-3">
+          <div className="grid flex-1 gap-3 md:grid-cols-4">
           <Input
             placeholder="Search title or brief"
             value={q}
@@ -58,6 +60,15 @@ export default function BrowseProjectsPage() {
             {CATEGORIES.map((c) => (
               <option key={c}>{c}</option>
             ))}
+          </select>
+          <select
+            className="rounded-xl border-2 border-line bg-white px-3 py-2.5"
+            value={pricingType}
+            onChange={(e) => update({ pricingType: e.target.value, page: '1' })}
+          >
+            <option value="">All pricing</option>
+            <option value="fixed">Fixed price</option>
+            <option value="hourly">Hourly</option>
           </select>
           <label className="flex items-center gap-2 rounded-xl border-2 border-line bg-white px-3 py-2.5 text-sm font-bold">
             <input type="checkbox" checked={dueSoon} onChange={(e) => update({ dueSoon: e.target.checked ? '1' : '', page: '1' })} />

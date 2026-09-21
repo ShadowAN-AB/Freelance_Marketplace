@@ -84,7 +84,10 @@ const listProjects = asyncHandler(async (req, res) => {
   if (req.query.skill) filter.skills = new RegExp(req.query.skill, 'i');
   if (req.query.minBudget) filter.budgetMax = { $gte: Number(req.query.minBudget) };
   if (req.query.maxBudget) filter.budgetMin = { $lte: Number(req.query.maxBudget) };
-  if (req.query.dueSoon === 'true') {
+  if (req.query.pricingType === 'fixed' || req.query.pricingType === 'hourly') {
+    filter.pricingType = req.query.pricingType;
+  }
+  if (req.query.dueSoon === 'true' || req.query.dueSoon === '1') {
     const soon = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     filter.deadline = { $gte: new Date(), $lte: soon };
   }
