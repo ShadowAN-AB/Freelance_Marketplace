@@ -498,6 +498,7 @@
     <tr><td><code>/app/work/:id/invoice</code></td><td>Both</td><td>Printable invoice of held / released / refunded</td></tr>
     <tr><td><code>/app/notifications</code></td><td>Signed in</td><td>Typed inbox</td></tr>
     <tr><td><code>/app/messages</code></td><td>Both</td><td>Threads, presence, typing</td></tr>
+    <tr><td>unknown public URL</td><td>Public</td><td>404 with links home / projects / demo login</td></tr>
     <tr><td><code>/admin/contracts</code>, <code>/admin/audit</code></td><td>Admin</td><td>Escrow list and action log</td></tr>
   </tbody>
 </table>
@@ -571,7 +572,7 @@
 
 <h2 id="quality">14. Tests, CI, and quality</h2>
 <p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has 11 cases: register/login, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, and pricing-type list filter.</p>
-<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (including pricing labels). <code>cd client &amp;&amp; npm run e2e</code> is the Playwright hire-loop smoke (register → post → bid → accept → submit). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
+<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (including pricing labels). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
 
 <h2 id="setup">15. Local setup and demo</h2>
 <h3>Prerequisites</h3>
