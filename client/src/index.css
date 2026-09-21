@@ -1,9 +1,44 @@
-body {
-  margin: 0;
-  background: #f3eee4;
-  color: #1b1814;
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --color-paper: #f3eee4;
+  --color-paper-2: #e8e0d0;
+  --color-ink: #1b1814;
+  --color-muted: #5c564c;
+  --color-line: #d4cbb8;
+  --color-teal: #0f5c57;
+  --color-teal-2: #147a73;
+  --color-gold: #9a6700;
+  --color-danger: #9b2c2c;
 }
 
+html,
+body,
 #root {
-  min-height: 100svh;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 560;
+  letter-spacing: -0.03em;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
 }
