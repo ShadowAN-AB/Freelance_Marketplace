@@ -24,7 +24,7 @@ cd client && npm install && npm run dev
 
 MongoDB must be running at `MONGO_URI` (native `mongod` or `docker compose up -d mongo`).
 
-- App: http://localhost:5178
+- App: http://localhost:5178 (also http://127.0.0.1:5178)
 - API health: http://localhost:5001/health
 
 `CLIENT_URL` is required. The API will not start without it.
@@ -42,9 +42,10 @@ Demo password for every seeded account: `Password123!`
 ```bash
 cd server && npm test
 cd client && npm test
+cd client && npm run e2e
 ```
 
-GitHub Actions runs both suites on push to `main` (Mongo service + lint + client build).
+GitHub Actions runs API tests, the client build, then a Playwright hire-loop smoke.
 
 ## Docker
 
