@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FreelanceHub — Project Documentation</title>
+  <style>
+    :root {
+      --ink: #12211e;
+      --muted: #4d635c;
+      --paper: #f7faf8;
+      --line: #c3d8d1;
+      --teal: #00856f;
+      --teal-dark: #006655;
+      --coral: #ff4d2e;
+      --saffron: #ffb703;
+      --white: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      color: var(--ink);
+      background: var(--white);
+      font: 11.5pt/1.5 "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    @page {
+      size: A4;
+      margin: 16mm 16mm 18mm 16mm;
+    }
+    h1, h2, h3, h4, .display {
+      font-family: Georgia, "Times New Roman", serif;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    h1 { font-size: 28pt; margin: 0 0 8pt; }
+    h2 {
+      font-size: 16pt;
+      color: var(--teal-dark);
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 4pt;
+      margin: 22pt 0 10pt;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 12.5pt; margin: 14pt 0 6pt; page-break-after: avoid; }
+    h4 { font-size: 11pt; margin: 10pt 0 4pt; }
+    p { margin: 0 0 8pt; }
+    a { color: var(--teal-dark); }
+    ul, ol { margin: 0 0 10pt; padding-left: 18pt; }
+    li { margin-bottom: 3pt; }
+    code, .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9.5pt;
+    }
+    code {
+      background: #eef6f3;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    pre {
+      background: #12211e;
+      color: #e8f4ef;
+      padding: 10pt 12pt;
+      border-radius: 8px;
+      font: 8.5pt/1.45 ui-monospace, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      page-break-inside: avoid;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 12pt;
+      font-size: 10pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 5pt 7pt;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #e4f3ee; color: var(--teal-dark); }
+    tr:nth-child(even) td { background: #f7fbf9; }
+    .cover {
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      background:
+        radial-gradient(520px 240px at 108% -4%, rgba(255, 77, 46, 0.16), transparent 55%),
+        radial-gradient(480px 260px at -10% 8%, rgba(0, 184, 148, 0.18), transparent 55%);
+      padding: 18mm 8mm 12mm;
+    }
+    .kicker {
+      display: inline-block;
+      background: var(--saffron);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 9pt;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 4pt 10pt;
+      border-radius: 999px;
+    }
+    .cover h1 { font-size: 36pt; margin-top: 16pt; }
+    .cover .sub { font-size: 14pt; color: var(--muted); max-width: 140mm; }
+    .meta { font-size: 10pt; color: var(--muted); }
+    .badge-row { margin-top: 14pt; }
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3pt 9pt;
+      font-size: 9pt;
+      font-weight: 700;
+      margin: 0 4pt 4pt 0;
+    }
+    .chip.teal { background: #d4ebe4; color: var(--teal-dark); }
+    .chip.coral { background: #ffe3dc; color: #c4321c; }
+    .chip.gold { background: #ffe9b8; color: #7a5a00; }
+    .toc a { text-decoration: none; color: var(--ink); }
+    .toc li { margin-bottom: 5pt; }
+    .note {
+      background: #fff6de;
+      border-left: 4px solid var(--saffron);
+      padding: 8pt 10pt;
+      margin: 0 0 12pt;
+      page-break-inside: avoid;
+    }
+    .callout {
+      background: #e8f6f2;
+      border-left: 4px solid var(--teal);
+      padding: 8pt 10pt;
+      margin: 0 0 12pt;
+      page-break-inside: avoid;
+    }
+    .warn {
+      background: #ffe8e3;
+      border-left: 4px solid var(--coral);
+      padding: 8pt 10pt;
+      margin: 0 0 12pt;
+      page-break-inside: avoid;
+    }
+    figure {
+      margin: 12pt 0 16pt;
+      page-break-inside: avoid;
+      text-align: center;
+    }
+    figcaption {
+      font-size: 9pt;
+      color: var(--muted);
+      margin-top: 6pt;
+    }
+    svg { max-width: 100%; height: auto; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10pt; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9pt 10pt;
+      page-break-inside: avoid;
+    }
+    .card h3 { margin-top: 0; }
+    footer.page-foot { display: none; }
+    .small { font-size: 9.5pt; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<section class="cover">
+  <div>
+    <span class="kicker">Technical documentation</span>
+    <h1 class="display">FreelanceHub</h1>
+    <p class="sub">A MERN freelance marketplace for posting work, hiring talent, chatting, holding simulated escrow, and completing jobs with reviews.</p>
+    <div class="badge-row">
+      <span class="chip teal">React 19 + Vite 6</span>
+      <span class="chip coral">Express + MongoDB</span>
+      <span class="chip gold">Socket.IO</span>
+      <span class="chip teal">JWT auth</span>
+    </div>
+  </div>
+  <div class="meta">
+    <p><strong>Repository:</strong> github.com/ShadowAN-AB/Freelance_Marketplace</p>
+    <p><strong>Local app:</strong> http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001</p>
+    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 1.0</p>
+  </div>
+</section>
+
+<h2>Contents</h2>
+<ol class="toc">
+  <li><a href="#intro">1. What this project is</a></li>
+  <li><a href="#goals">2. Goals and non-goals</a></li>
+  <li><a href="#stack">3. Technology stack</a></li>
+  <li><a href="#arch">4. System architecture</a></li>
+  <li><a href="#layout">5. Repository layout</a></li>
+  <li><a href="#domain">6. Domain model</a></li>
+  <li><a href="#roles">7. Roles and screens</a></li>
+  <li><a href="#loop">8. Core hiring loop</a></li>
+  <li><a href="#features">9. Feature catalogue</a></li>
+  <li><a href="#client">10. Client application</a></li>
+  <li><a href="#api">11. REST API</a></li>
+  <li><a href="#realtime">12. Real-time chat and presence</a></li>
+  <li><a href="#security">13. Security and validation</a></li>
+  <li><a href="#setup">14. Local setup and demo</a></li>
+  <li><a href="#ops">15. Operations notes</a></li>
+</ol>
+
+<h2 id="intro">1. What this project is</h2>
+<p>FreelanceHub is a full-stack marketplace where <strong>clients</strong> post paid projects and <strong>freelancers</strong> bid with a single proposal. After a hire, the two parties chat, the freelancer submits work (optionally with files), the client can request revisions or approve, and simulated escrow is released. Both sides can then leave a review. An <strong>admin</strong> account can inspect users, projects, reports, and analytics.</p>
+<p>The product is a classic MERN app (MongoDB, Express, React, Node.js), not microservices. Payments are simulated: accepting a proposal creates a <code>Payment</code> in status <code>held</code>; completing the contract flips it to <code>released</code>. There is no Stripe, email, or LLM matching.</p>
+<div class="callout">
+  <strong>One-line summary.</strong> Post → propose → hire (escrow hold) → chat → submit work → optional revision → complete → review.
+</div>
+
+<h2 id="goals">2. Goals and non-goals</h2>
+<div class="two">
+  <div class="card">
+    <h3>In scope</h3>
+    <ul>
+      <li>Email/password auth with JWT and bcrypt</li>
+      <li>Project posting, browse, filters, skill matching</li>
+      <li>One proposal per freelancer per project</li>
+      <li>Hire, contract, simulated escrow</li>
+      <li>Deliverable uploads and revision requests</li>
+      <li>Project-scoped chat with presence and unread badges</li>
+      <li>Saved items, proposal shortlists, reports</li>
+      <li>Reviews after completion</li>
+      <li>Admin analytics, block users, moderate reports</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Out of scope</h3>
+    <ul>
+      <li>Real card payments / Stripe / payouts</li>
+      <li>Transactional email or SMS</li>
+      <li>Google / social login</li>
+      <li>LLM-based matching or cover-letter help</li>
+      <li>Milestones or partial releases</li>
+      <li>Mobile native apps</li>
+      <li>Multi-region deployment</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="stack">3. Technology stack</h2>
+<table>
+  <thead><tr><th>Layer</th><th>Choice</th><th>Why it is used</th></tr></thead>
+  <tbody>
+    <tr><td>Client</td><td>React 19, Vite 6, Tailwind CSS 4</td><td>SPA UI, fast local dev, utility styling</td></tr>
+    <tr><td>Routing / data</td><td>React Router 7, TanStack Query, Axios</td><td>Page routes, cached REST fetches</td></tr>
+    <tr><td>Realtime client</td><td>Socket.IO client</td><td>Live messages and online dots</td></tr>
+    <tr><td>Charts</td><td>Recharts</td><td>Admin analytics</td></tr>
+    <tr><td>API</td><td>Node.js, Express 4</td><td>REST + static <code>/uploads</code></td></tr>
+    <tr><td>Data</td><td>MongoDB 7, Mongoose 8</td><td>Documents for users, projects, contracts</td></tr>
+    <tr><td>Auth</td><td>JWT, bcryptjs, express-rate-limit</td><td>Stateless login, hashed passwords</td></tr>
+    <tr><td>Validation</td><td>Zod</td><td>Request body schemas</td></tr>
+    <tr><td>Uploads</td><td>Multer</td><td>Avatars (2 MB images) and deliverables (8 MB)</td></tr>
+    <tr><td>Realtime server</td><td>Socket.IO</td><td>Chat rooms + presence map</td></tr>
+    <tr><td>Hardening</td><td>Helmet, CORS, hidden <code>x-powered-by</code></td><td>Baseline HTTP headers</td></tr>
+  </tbody>
+</table>
+<p>Local ports are chosen to avoid macOS conflicts: the API listens on <strong>5001</strong>, the Vite app on <strong>5178</strong>. Vite proxies <code>/api</code>, <code>/uploads</code>, <code>/health</code>, and <code>/socket.io</code> to the API.</p>
+
+<h2 id="arch">4. System architecture</h2>
+<p>The browser never talks to MongoDB. It talks to Express over HTTP (JSON and multipart) and to the same Node process over WebSockets. JWT is sent as <code>Authorization: Bearer</code> for REST and as Socket.IO handshake <code>auth.token</code>.</p>
+
+<figure>
+  <svg viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FreelanceHub architecture">
+    <rect width="820" height="360" fill="#f7faf8"/>
+    <rect x="20" y="80" width="180" height="160" rx="14" fill="#ff4d2e"/>
+    <text x="110" y="145" text-anchor="middle" fill="#fff" font-family="Georgia" font-size="18">React SPA</text>
+    <text x="110" y="172" text-anchor="middle" fill="#fff" font-size="12">Vite :5178</text>
+    <text x="110" y="192" text-anchor="middle" fill="#ffe9e4" font-size="11">Router · Query · Axios</text>
+    <rect x="280" y="30" width="260" height="260" rx="16" fill="#12211e"/>
+    <text x="410" y="70" text-anchor="middle" fill="#ffb703" font-family="Georgia" font-size="18">Express API</text>
+    <text x="410" y="96" text-anchor="middle" fill="#9ad9cc" font-size="12">Node :5001</text>
+    <rect x="305" y="120" width="210" height="48" rx="8" fill="#00856f"/>
+    <text x="410" y="149" text-anchor="middle" fill="#fff" font-size="13">REST /api/*</text>
+    <rect x="305" y="182" width="210" height="48" rx="8" fill="#ff4d2e"/>
+    <text x="410" y="211" text-anchor="middle" fill="#fff" font-size="13">Socket.IO</text>
+    <rect x="305" y="244" width="210" height="28" rx="8" fill="#2a3d38"/>
+    <text x="410" y="263" text-anchor="middle" fill="#d4ebe4" font-size="11">/uploads static files</text>
+    <rect x="620" y="80" width="180" height="160" rx="14" fill="#00856f"/>
+    <text x="710" y="145" text-anchor="middle" fill="#fff" font-family="Georgia" font-size="18">MongoDB</text>
+    <text x="710" y="172" text-anchor="middle" fill="#fff" font-size="12">:27017</text>
+    <text x="710" y="192" text-anchor="middle" fill="#d4ebe4" font-size="11">freelancehub</text>
+    <path d="M200 140 L280 140" stroke="#12211e" stroke-width="3" marker-end="url(#arr)"/>
+    <path d="M200 180 L280 200" stroke="#ff4d2e" stroke-width="3" marker-end="url(#arr2)"/>
+    <path d="M540 160 L620 160" stroke="#fff" stroke-width="3" marker-end="url(#arr3)"/>
+    <text x="240" y="128" font-size="10" fill="#12211e">HTTP JSON</text>
+    <text x="218" y="208" font-size="10" fill="#c4321c">WebSocket</text>
+    <text x="555" y="148" font-size="10" fill="#9ad9cc">Mongoose</text>
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#12211e"/></marker>
+      <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ff4d2e"/></marker>
+      <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#fff"/></marker>
+    </defs>
+  </svg>
+  <figcaption>Figure 1. Browser SPA, single Express process (REST + Socket.IO + file hosting), MongoDB.</figcaption>
+</figure>
+
+<p>AuthContext loads <code>/api/auth/me</code> from <code>localStorage.fh_token</code>, then opens a Socket.IO connection. If the token is missing or rejected, the user is treated as logged out.</p>
+
+<h2 id="layout">5. Repository layout</h2>
+<pre>Freelance_Marketplace/
+├── client/                 React SPA (Vite)
+│   ├── src/App.jsx         Routes and role guards
+│   ├── src/context/        Auth + socket connect
+│   ├── src/layouts/        Public nav and signed-in shell
+│   ├── src/pages/          public, auth, client, freelancer, admin, shared
+│   └── vite.config.js      Proxies /api and /socket.io → :5001
+├── server/
+│   ├── src/server.js       HTTP + Socket.IO bootstrap
+│   ├── src/models/         Mongoose schemas
+│   ├── src/controllers/    Route handlers
+│   ├── src/routes/         Express routers
+│   ├── src/middleware/     JWT, Zod, Multer, errors
+│   ├── src/services/       notify + socket
+│   ├── src/seeds/seed.js   Demo data
+│   └── uploads/            Avatar and deliverable files
+├── docker-compose.yml      mongo:7 on port 27017
+├── docs/                   This documentation
+└── README.md</pre>
+<p>A native <code>mongod</code> on the same port as Docker Mongo can hide the empty Docker volume. The API uses whatever is on <code>MONGO_URI</code> (default <code>mongodb://127.0.0.1:27017/freelancehub</code>).</p>
+
+<h2 id="domain">6. Domain model</h2>
+<p>Collections are linked by ObjectIds. A project has at most one hired proposal. A contract is unique per project. A payment is unique per contract. Chat is unique per (project, unordered pair of users).</p>
+
+<figure>
+  <svg viewBox="0 0 840 430" xmlns="http://www.w3.org/2000/svg" aria-label="Entity relationship overview">
+    <rect width="840" height="430" fill="#ffffff"/>
+    <g font-family="Segoe UI, Helvetica, sans-serif" font-size="11">
+      <rect x="20" y="20" width="150" height="90" rx="8" fill="#00856f"/>
+      <text x="95" y="55" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">User</text>
+      <text x="95" y="76" text-anchor="middle" fill="#d4ebe4">role, ratings, saves</text>
+      <rect x="230" y="20" width="150" height="90" rx="8" fill="#12211e"/>
+      <text x="305" y="55" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Project</text>
+      <text x="305" y="76" text-anchor="middle" fill="#9ad9cc">budget, skills, status</text>
+      <rect x="440" y="20" width="150" height="90" rx="8" fill="#ff4d2e"/>
+      <text x="515" y="55" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Proposal</text>
+      <text x="515" y="76" text-anchor="middle" fill="#ffe3dc">bid, shortlisted</text>
+      <rect x="650" y="20" width="170" height="90" rx="8" fill="#00856f"/>
+      <text x="735" y="55" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Contract</text>
+      <text x="735" y="76" text-anchor="middle" fill="#d4ebe4">work, revisions, files</text>
+      <rect x="20" y="180" width="150" height="80" rx="8" fill="#12211e"/>
+      <text x="95" y="214" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Payment</text>
+      <text x="95" y="234" text-anchor="middle" fill="#9ad9cc">held / released</text>
+      <rect x="230" y="180" width="150" height="80" rx="8" fill="#ff4d2e"/>
+      <text x="305" y="214" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Conversation</text>
+      <text x="305" y="234" text-anchor="middle" fill="#ffe3dc">project + pair</text>
+      <rect x="440" y="180" width="150" height="80" rx="8" fill="#00856f"/>
+      <text x="515" y="214" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Message</text>
+      <text x="515" y="234" text-anchor="middle" fill="#d4ebe4">text, readBy</text>
+      <rect x="650" y="180" width="170" height="80" rx="8" fill="#12211e"/>
+      <text x="735" y="214" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Review</text>
+      <text x="735" y="234" text-anchor="middle" fill="#9ad9cc">1–5 stars after complete</text>
+      <rect x="230" y="310" width="150" height="80" rx="8" fill="#ffb703"/>
+      <text x="305" y="344" text-anchor="middle" fill="#12211e" font-size="14" font-family="Georgia">Notification</text>
+      <text x="305" y="364" text-anchor="middle" fill="#12211e">typed inbox alerts</text>
+      <rect x="440" y="310" width="150" height="80" rx="8" fill="#ff4d2e"/>
+      <text x="515" y="344" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Report</text>
+      <text x="515" y="364" text-anchor="middle" fill="#ffe3dc">user or project</text>
+      <line x1="170" y1="65" x2="230" y2="65" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="380" y1="65" x2="440" y2="65" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="590" y1="65" x2="650" y2="65" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="735" y1="110" x2="735" y2="180" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="95" y1="110" x2="95" y2="180" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="305" y1="110" x2="305" y2="180" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="515" y1="110" x2="515" y2="180" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="305" y1="260" x2="305" y2="310" stroke="#12211e" stroke-width="1.5"/>
+      <line x1="515" y1="260" x2="515" y2="310" stroke="#12211e" stroke-width="1.5"/>
+    </g>
+  </svg>
+  <figcaption>Figure 2. Main collections. Users also hold <code>savedProjectIds</code> and <code>savedFreelancerIds</code>.</figcaption>
+</figure>
+
+<h3>Important statuses</h3>
+<table>
+  <thead><tr><th>Entity</th><th>Statuses</th></tr></thead>
+  <tbody>
+    <tr><td>User.role</td><td><code>freelancer</code>, <code>client</code>, <code>admin</code></td></tr>
+    <tr><td>Project</td><td><code>open</code> → <code>in_progress</code> → <code>completed</code> (or <code>cancelled</code> / <code>closed</code>)</td></tr>
+    <tr><td>Proposal</td><td><code>pending</code>, <code>accepted</code>, <code>rejected</code>, <code>withdrawn</code></td></tr>
+    <tr><td>Contract</td><td><code>active</code>, <code>completed</code>, <code>cancelled</code></td></tr>
+    <tr><td>Payment</td><td><code>held</code>, <code>released</code>, <code>refunded</code></td></tr>
+    <tr><td>Report</td><td><code>open</code>, <code>reviewed</code>, <code>dismissed</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="roles">7. Roles and screens</h2>
+<table>
+  <thead><tr><th>Role</th><th>Can do</th><th>Primary screens</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Guest</td>
+      <td>Browse projects and talent. Must log in to bid, save, report, or chat.</td>
+      <td>Home, /projects, /freelancers, login, register</td>
+    </tr>
+    <tr>
+      <td>Freelancer</td>
+      <td>Propose once per open project, save projects, submit work and files, chat after a proposal exists, withdraw a pending bid, review after completion.</td>
+      <td>Dashboard, Browse, Proposals, Active work, Saved, Messages, Earnings, Profile, Settings</td>
+    </tr>
+    <tr>
+      <td>Client</td>
+      <td>Post/edit/cancel projects, shortlist and accept/reject bids, save talent, request revision, approve work (release escrow), report, chat after a proposal exists.</td>
+      <td>Dashboard, Post project, My projects, Proposals inbox, Active work, Saved, Messages, Profile, Settings</td>
+    </tr>
+    <tr>
+      <td>Admin</td>
+      <td>Platform stats, list/block users, list projects, resolve reports. Admin accounts are seeded, not self-registered.</td>
+      <td>/admin, Users, Projects, Reports</td>
+    </tr>
+  </tbody>
+</table>
+<p><code>ProtectedRoute</code> sends anonymous users to login. <code>RoleRoute</code> sends the wrong role back to the dashboard. <code>GuestRoute</code> sends an already-signed-in user away from login/register.</p>
+
+<h2 id="loop">8. Core hiring loop</h2>
+<p>This is the only money path in the product. Everything else (saved items, shortlists, reports, presence) sits on top of it.</p>
+
+<figure>
+  <svg viewBox="0 0 860 210" xmlns="http://www.w3.org/2000/svg" aria-label="Hiring loop">
+    <rect width="860" height="210" fill="#f7faf8"/>
+    <g font-family="Segoe UI, Helvetica, sans-serif" font-size="11" text-anchor="middle">
+      <rect x="10" y="70" width="110" height="54" rx="10" fill="#00856f"/><text x="65" y="102" fill="#fff">Post project</text>
+      <rect x="140" y="70" width="110" height="54" rx="10" fill="#12211e"/><text x="195" y="102" fill="#ffb703">Propose</text>
+      <rect x="270" y="70" width="110" height="54" rx="10" fill="#ff4d2e"/><text x="325" y="95" fill="#fff">Accept hire</text><text x="325" y="112" fill="#ffe3dc" font-size="10">escrow held</text>
+      <rect x="400" y="70" width="110" height="54" rx="10" fill="#00856f"/><text x="455" y="102" fill="#fff">Submit work</text>
+      <rect x="530" y="70" width="110" height="54" rx="10" fill="#ffb703"/><text x="585" y="95" fill="#12211e">Revise?</text><text x="585" y="112" fill="#12211e" font-size="10">optional</text>
+      <rect x="660" y="70" width="90" height="54" rx="10" fill="#00856f"/><text x="705" y="102" fill="#fff">Complete</text>
+      <rect x="770" y="70" width="80" height="54" rx="10" fill="#12211e"/><text x="810" y="102" fill="#ffb703">Review</text>
+      <path d="M120 97 L140 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M250 97 L270 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M380 97 L400 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M510 97 L530 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M640 97 L660 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M750 97 L770 97" stroke="#12211e" stroke-width="2"/>
+      <path d="M585 124 C585 170 455 170 455 124" fill="none" stroke="#ff4d2e" stroke-width="2"/>
+      <text x="520" y="188" fill="#c4321c" font-size="10">clears submission, freelancer resubmits</text>
+    </g>
+  </svg>
+  <figcaption>Figure 3. Happy path plus the revision loop. Complete still requires a current <code>workSubmittedAt</code>.</figcaption>
+</figure>
+
+<h3>Domain rules (enforced on the server)</h3>
+<ul>
+  <li>One proposal per freelancer per project (unique index).</li>
+  <li>You cannot bid on your own project or on a non-open project.</li>
+  <li>Accepting a bid rejects other pending bids, sets the project to <code>in_progress</code>, creates a contract and a held payment, and opens (or reuses) a conversation.</li>
+  <li>Chat is allowed only if a pending or accepted proposal exists between the two users on that project.</li>
+  <li>Only the hired freelancer can submit work. Only the client can request a revision or complete.</li>
+  <li>Revision keeps status <code>active</code>, increments <code>revisionCount</code>, stores <code>revisionNote</code>, and clears <code>workSubmittedAt</code>.</li>
+  <li>Reviews are allowed only after <code>completed</code>, once per reviewer per contract. Average rating is recomputed on the reviewee.</li>
+</ul>
+
+<h2 id="features">9. Feature catalogue</h2>
+
+<h3>9.1 Auth and profiles</h3>
+<p>Register is limited to <code>freelancer</code> or <code>client</code>. Passwords are hashed with bcrypt (cost 12). Login is rate-limited (40 attempts / 15 minutes). Blocked users cannot sign in. Profiles store bio, location, avatar, freelancer skills/rate/portfolio/availability, or client company name. <code>PATCH /api/auth/password</code> checks the current password before hashing a new one.</p>
+
+<h3>9.2 Projects and skill matching</h3>
+<p>Clients create projects with category, skills, INR budget range, and deadline. Public browse defaults to <code>open</code> and supports text search, skill, category, and budget filters. Matching score is overlap of required skills plus a small bonus for extra freelancer skills, capped at 100%. Freelancers see recommended open projects on the dashboard; clients see ranked talent on the proposals page.</p>
+
+<h3>9.3 Proposals and shortlist</h3>
+<p>A proposal has cover letter, bid amount, and estimated days. Clients can star pending proposals (<code>shortlisted</code>). The inbox sorts shortlisted first, then newest.</p>
+
+<h3>9.4 Work, deliverables, revisions</h3>
+<p>Submit-work is multipart. Allowed files: PDF, ZIP, PNG, JPEG, WebP, max 8 MB each (up to 8 files). URLs are stored on the contract as <code>deliverables[]</code> and served from <code>/uploads</code>. Re-submit after a revision replaces the list. The client downloads files from the work card, next to Approve and Request revision.</p>
+
+<h3>9.5 Saved items</h3>
+<p>Freelancers bookmark projects; clients bookmark talent. Toggles live on public detail pages. <code>/app/saved</code> lists the populated documents.</p>
+
+<h3>9.6 Messaging, unread, presence</h3>
+<p>Messages persist in MongoDB. Each message has <code>readBy</code>. Unread count is the number of threads whose <em>latest</em> message is not read by the current user. Opening a thread calls <code>POST /conversations/:id/read</code>. Socket.IO maintains <code>onlineUsers</code> and emits <code>presence:update</code>; the chat list shows a teal dot when the other participant is connected.</p>
+
+<h3>9.7 Notifications</h3>
+<p>In-app notifications are created for proposal received/accepted/rejected, messages, work submitted, revision requested, contract completed, review received, and report updates. The shell shows a coral count on Alerts.</p>
+
+<h3>9.8 Reports and admin</h3>
+<p>Signed-in users can report a user or a project with a reason. Admins list reports and set status to reviewed or dismissed, which notifies the reporter. Admins can also block users. Analytics aggregate counts by user role, project status, proposal status, contract status, payment status, and reports.</p>
+
+<h2 id="client">10. Client application</h2>
+<table>
+  <thead><tr><th>Path</th><th>Who</th><th>Page</th></tr></thead>
+  <tbody>
+    <tr><td><code>/</code></td><td>Public</td><td>Marketing home</td></tr>
+    <tr><td><code>/projects</code>, <code>/projects/:id</code></td><td>Public</td><td>Browse and project detail (propose, save, report)</td></tr>
+    <tr><td><code>/freelancers</code>, <code>/freelancers/:id</code></td><td>Public</td><td>Talent directory and profile (save, report)</td></tr>
+    <tr><td><code>/login</code>, <code>/register</code></td><td>Guest</td><td>Auth forms</td></tr>
+    <tr><td><code>/app/dashboard</code></td><td>Signed in</td><td>Role-specific desk and recommendations</td></tr>
+    <tr><td><code>/app/projects/new</code>, <code>/app/projects</code></td><td>Client</td><td>Post and list own projects</td></tr>
+    <tr><td><code>/app/projects/:id/proposals</code></td><td>Client</td><td>Inbox, shortlist, accept/reject</td></tr>
+    <tr><td><code>/app/proposals</code></td><td>Freelancer</td><td>Own bids</td></tr>
+    <tr><td><code>/app/work</code></td><td>Both</td><td>Contracts, files, revision, approve, review</td></tr>
+    <tr><td><code>/app/messages</code></td><td>Both</td><td>Threads + presence</td></tr>
+    <tr><td><code>/app/saved</code></td><td>Both</td><td>Bookmarks</td></tr>
+    <tr><td><code>/app/earnings</code></td><td>Freelancer</td><td>Held vs released totals</td></tr>
+    <tr><td><code>/app/profile</code>, <code>/app/settings</code></td><td>Signed in</td><td>Profile fields and password</td></tr>
+    <tr><td><code>/admin/*</code></td><td>Admin</td><td>Stats, users, projects, reports</td></tr>
+  </tbody>
+</table>
+<p>Visual language: mint paper background, coral primary buttons, teal accents, saffron highlights, Fraunces display type. Nested dashboard routes render through an <code>Outlet</code> inside <code>AppShell</code> so the sidebar does not unmount the page.</p>
+
+<h2 id="api">11. REST API</h2>
+<p>Base URL in the browser is <code>/api</code> (proxied). JSON error shape: <code>{ message, errors? }</code>.</p>
+<table>
+  <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td>/auth/register, /auth/login</td><td>Public (limited)</td><td>Create session JWT</td></tr>
+    <tr><td>GET</td><td>/auth/me</td><td>User</td><td>Current user</td></tr>
+    <tr><td>PATCH</td><td>/auth/password</td><td>User</td><td>Change password</td></tr>
+    <tr><td>PATCH</td><td>/users/me</td><td>User</td><td>Update profile</td></tr>
+    <tr><td>POST</td><td>/users/me/avatar</td><td>User</td><td>Avatar image</td></tr>
+    <tr><td>GET/POST/DELETE</td><td>/users/me/saved*</td><td>Role-specific</td><td>Bookmarks</td></tr>
+    <tr><td>GET</td><td>/freelancers</td><td>Public</td><td>Talent search</td></tr>
+    <tr><td>GET/POST/PATCH</td><td>/projects…</td><td>Mixed</td><td>CRUD, cancel, matches, recommended</td></tr>
+    <tr><td>POST/GET</td><td>/projects/:id/proposals</td><td>Freelancer / client</td><td>Create or list bids</td></tr>
+    <tr><td>POST</td><td>/proposals/:id/accept|reject|withdraw|shortlist</td><td>Role-specific</td><td>Hire flow</td></tr>
+    <tr><td>GET</td><td>/contracts/me, /contracts/:id</td><td>Party</td><td>Work cards</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/submit-work</td><td>Freelancer</td><td>Multipart files</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/request-revision</td><td>Client</td><td>{ note }</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/complete</td><td>Client</td><td>Release escrow</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/reviews</td><td>Party</td><td>After complete</td></tr>
+    <tr><td>GET</td><td>/payments/me</td><td>Client/freelancer</td><td>Escrow ledger</td></tr>
+    <tr><td>GET/POST</td><td>/conversations…</td><td>Participant</td><td>Threads, messages, read, unread-count</td></tr>
+    <tr><td>GET/PATCH</td><td>/notifications</td><td>User</td><td>List and mark read</td></tr>
+    <tr><td>POST</td><td>/reports</td><td>User</td><td>Flag user or project</td></tr>
+    <tr><td>GET/PATCH</td><td>/admin/…</td><td>Admin</td><td>Stats, users, projects, reports</td></tr>
+    <tr><td>GET</td><td>/health</td><td>Public</td><td><code>{ ok, service }</code></td></tr>
+  </tbody>
+</table>
+
+<h2 id="realtime">12. Real-time chat and presence</h2>
+<figure>
+  <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg" aria-label="Chat events">
+    <rect width="820" height="200" fill="#ffffff"/>
+    <g font-family="Segoe UI, Helvetica, sans-serif" font-size="12">
+      <rect x="20" y="30" width="160" height="50" rx="8" fill="#ff4d2e"/><text x="100" y="60" text-anchor="middle" fill="#fff">Client socket</text>
+      <rect x="330" y="20" width="160" height="160" rx="12" fill="#12211e"/><text x="410" y="70" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Socket.IO</text>
+      <text x="410" y="95" text-anchor="middle" fill="#9ad9cc" font-size="11">room conversation:id</text>
+      <text x="410" y="115" text-anchor="middle" fill="#9ad9cc" font-size="11">room user:id</text>
+      <text x="410" y="145" text-anchor="middle" fill="#fff" font-size="11">onlineUsers Map</text>
+      <rect x="640" y="30" width="160" height="50" rx="8" fill="#00856f"/><text x="720" y="60" text-anchor="middle" fill="#fff">Freelancer socket</text>
+      <path d="M180 50 L330 70" stroke="#12211e" stroke-width="2"/>
+      <path d="M490 70 L640 50" stroke="#12211e" stroke-width="2"/>
+      <text x="410" y="188" text-anchor="middle" fill="#4d635c" font-size="11">message:send → persist → message:new · presence:update</text>
+    </g>
+  </svg>
+  <figcaption>Figure 4. Chat is persisted first, then broadcast. Presence is an in-memory map of userId → socketId.</figcaption>
+</figure>
+<table>
+  <thead><tr><th>Event</th><th>Direction</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>conversation:join</code></td><td>Client → server</td><td>Join room for live messages</td></tr>
+    <tr><td><code>message:send</code></td><td>Client → server</td><td>Create message, notify other user</td></tr>
+    <tr><td><code>message:new</code></td><td>Server → room</td><td>Append in the thread UI</td></tr>
+    <tr><td><code>message:read</code></td><td>Server → room</td><td>Read receipts</td></tr>
+    <tr><td><code>presence:update</code></td><td>Server → all</td><td><code>{ userId, online }</code>; snapshot sent on connect</td></tr>
+    <tr><td><code>notification:new</code></td><td>Server → user room</td><td>Nudge alerts after a chat message</td></tr>
+  </tbody>
+</table>
+<p>HTTP <code>POST /conversations/:id/messages</code> is a fallback if the socket is down; it also emits <code>message:new</code> when <code>io</code> is attached to the Express app.</p>
+
+<h2 id="security">13. Security and validation</h2>
+<ul>
+  <li>Passwords stored with bcrypt; never returned on user documents (<code>select: false</code>).</li>
+  <li>JWT payload is <code>{ id, role }</code>. Middleware reloads the user and rejects blocked accounts.</li>
+  <li>Zod schemas on mutating routes. Multer rejects disallowed MIME types.</li>
+  <li>Helmet with cross-origin resource policy so avatars and deliverables can load from the SPA origin.</li>
+  <li>CORS locked to <code>CLIENT_URL</code>. JSON body capped at 1 MB.</li>
+  <li>Auth endpoints rate-limited. Duplicate emails and duplicate proposals return 409.</li>
+  <li>Authorization is checked in controllers (client owns project, freelancer is hired party, conversation participant, and so on). Role middleware is a first gate, not the only gate.</li>
+</ul>
+<div class="warn">
+  <strong>Demo secrets.</strong> <code>server/.env</code> ships a development JWT secret. Rotate it before any shared or production deploy. Payments are not real money.
+</div>
+
+<h2 id="setup">14. Local setup and demo</h2>
+<h3>Prerequisites</h3>
+<ul>
+  <li>Node.js 20+ (tested on 22)</li>
+  <li>MongoDB on <code>127.0.0.1:27017</code> — either Docker Compose or a local <code>mongod</code></li>
+</ul>
+<pre>docker compose up -d
+cp .env.example server/.env
+cd server && npm install && npm run seed && npm run dev
+cd client && npm install && npm run dev</pre>
+<p>Open <strong>http://localhost:5178</strong>. API health: <strong>http://localhost:5001/health</strong>.</p>
+<p>Every seeded account uses password <code>Password123!</code>.</p>
+<table>
+  <thead><tr><th>Role</th><th>Email</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Admin</td><td>admin@freelancehub.dev</td><td>Analytics and moderation</td></tr>
+    <tr><td>Client</td><td>priya@freelancehub.dev</td><td>Open projects + in-progress inventory hire with Aisha</td></tr>
+    <tr><td>Client</td><td>arjun@freelancehub.dev</td><td>Completed SEO contract with Leo</td></tr>
+    <tr><td>Freelancer</td><td>aisha@freelancehub.dev</td><td>Pending dashboard bid + active mobile contract</td></tr>
+    <tr><td>Freelancer</td><td>kabir@freelancehub.dev, meera@freelancehub.dev, leo@freelancehub.dev</td><td>Extra bids and a completed job</td></tr>
+  </tbody>
+</table>
+<h3>Ten-minute walkthrough</h3>
+<ol>
+  <li>Log in as Priya. Open My projects → React dashboard → Proposals. Star a bid, then Accept (escrow holds).</li>
+  <li>Log in as Aisha. Open Active work, attach a file, submit. Switch to Priya: download the file, Request revision with a note, or Approve and release payment.</li>
+  <li>After a revision, Aisha submits again; Priya can then complete and both leave reviews.</li>
+  <li>Open Messages on both accounts — online dots appear when both sockets are connected. Unread badges sit on Messages and Alerts.</li>
+  <li>Bookmark a project (freelancer) or a freelancer (client) and confirm <code>/app/saved</code>.</li>
+  <li>Report a listing from a public page. Resolve it as admin.</li>
+</ol>
+
+<h2 id="ops">15. Operations notes</h2>
+<ul>
+  <li><code>npm run seed</code> wipes marketplace collections and rebuilds demo users, projects, proposals, contracts, payments, a chat transcript, reviews, and notifications.</li>
+  <li>Uploaded files live on disk under <code>server/uploads/</code>. They are not in Git.</li>
+  <li>Presence is in-memory: a process restart marks everyone offline until they reconnect.</li>
+  <li>If port 27017 already has a local MongoDB, Docker’s mapped port will fail or you will see an empty database. Point <code>MONGO_URI</code> at the instance that actually contains the seed.</li>
+  <li>Vite 6 is pinned because newer Vite/Rolldown builds failed on this machine’s native bindings.</li>
+</ul>
+<div class="note">
+  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 (main branch including the sequential feature pack: saved items, revisions, deliverables, shortlists, unread badges, settings/reports, and chat presence).
+</div>
+<p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
+
+</body>
+</html>
