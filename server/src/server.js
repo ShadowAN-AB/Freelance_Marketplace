@@ -28,7 +28,48 @@ const reportRoutes = require('./routes/reports');
 const reviewRoutes = require('./routes/reviews');
 const { marketplaceStats } = require('./controllers/statsController');
 
-function createApp() {
+function resolveService(options = {}) {
+  return options.service || process.env.SERVICE || 'all';
+}
+
+function serviceLabel(service) {
+  if (service === 'auth') return 'freelancehub-auth';
+  if (service === 'marketplace') return 'freelancehub-marketplace';
+  if (service === 'realtime') return 'freelancehub-realtime';
+  return 'freelancehub-api';
+}
+
+function includes(service, name) {
+  return service === 'all' || service === name;
+}
+
+function mountApi(app, service) {
+  if (includes(service, 'marketplace')) {
+    app.get('/api/stats', marketplaceStats);
+  }
+  if (includes(service, 'auth')) {
+    app.use('/api/auth', authRoutes);
+    app.use('/api/users', userRoutes);
+  }
+  if (includes(service, 'marketplace')) {
+    app.use('/api/users/:id/reviews', reviewRoutes);
+    app.use('/api/freelancers', freelancerRoutes);
+    app.use('/api/projects/:id/proposals', projectProposalRoutes);
+    app.use('/api/projects', projectRoutes);
+    app.use('/api/proposals', proposalRoutes);
+    app.use('/api/contracts', contractRoutes);
+    app.use('/api/payments', paymentRoutes);
+    app.use('/api/admin', adminRoutes);
+    app.use('/api/reports', reportRoutes);
+  }
+  if (includes(service, 'realtime')) {
+    app.use('/api/conversations', conversationRoutes);
+    app.use('/api/notifications', notificationRoutes);
+  }
+}
+
+function createApp(options = {}) {
+  const service = resolveService(options);
   const origin = clientUrl();
   const app = express();
   app.disable('x-powered-by');
@@ -37,42 +78,31 @@ function createApp() {
   app.use(cors({ origin, credentials: true }));
   app.use(parseCookies);
   app.use(csrfProtect);
-  app.post(
-    '/api/payments/webhook',
-    express.raw({ type: 'application/json' }),
-    (req, res, next) => {
-      handleStripeWebhook(req, res).catch(next);
-    }
-  );
+  if (includes(service, 'marketplace')) {
+    app.post(
+      '/api/payments/webhook',
+      express.raw({ type: 'application/json' }),
+      (req, res, next) => {
+        handleStripeWebhook(req, res).catch(next);
+      }
+    );
+  }
   app.use(express.json({ limit: '1mb' }));
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  if (includes(service, 'marketplace') || includes(service, 'realtime')) {
+    app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+  }
 
   app.get('/health', (_req, res) => {
     const mongo = mongoose.connection.readyState === 1;
     res.status(mongo ? 200 : 503).json({
       ok: mongo,
-      service: 'freelancehub-api',
+      service: serviceLabel(service),
       mongo,
       env: process.env.NODE_ENV || 'development',
     });
   });
 
-  app.get('/api/stats', marketplaceStats);
-
-  app.use('/api/auth', authRoutes);
-  app.use('/api/freelancers', freelancerRoutes);
-  app.use('/api/users', userRoutes);
-  app.use('/api/users/:id/reviews', reviewRoutes);
-  app.use('/api/projects/:id/proposals', projectProposalRoutes);
-  app.use('/api/projects', projectRoutes);
-  app.use('/api/proposals', proposalRoutes);
-  app.use('/api/contracts', contractRoutes);
-  app.use('/api/payments', paymentRoutes);
-  app.use('/api/conversations', conversationRoutes);
-  app.use('/api/notifications', notificationRoutes);
-  app.use('/api/admin', adminRoutes);
-  app.use('/api/reports', reportRoutes);
-
+  mountApi(app, service);
   app.use(notFound);
   app.use(errorHandler);
   return app;
@@ -85,14 +115,19 @@ async function start() {
   if (isProd() && process.env.JWT_SECRET === 'freelancehub-dev-secret-change-me-please-32chars') {
     throw new Error('Set a unique JWT_SECRET before running in production');
   }
-  ensureUploadDir();
+  const service = resolveService();
+  if (includes(service, 'marketplace') || includes(service, 'realtime')) {
+    ensureUploadDir();
+  }
   await connectDb();
-  const app = createApp();
+  const app = createApp({ service });
   const server = http.createServer(app);
-  attachSocket(server, app);
+  if (includes(service, 'realtime')) {
+    attachSocket(server, app);
+  }
   const PORT = process.env.PORT || 5000;
   await new Promise((resolve) => server.listen(PORT, resolve));
-  logger.info({ port: PORT, client: clientUrl() }, 'FreelanceHub API listening');
+  logger.info({ port: PORT, service, client: clientUrl() }, 'FreelanceHub API listening');
   return server;
 }
 
@@ -103,4 +138,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createApp, start };
+module.exports = { createApp, start, resolveService };

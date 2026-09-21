@@ -860,4 +860,15 @@ describe('FreelanceHub API', () => {
     assert.ok(row.score >= 80);
     assert.match(row.rationale, /react/i);
   });
+
+  it('serves only auth routes when SERVICE=auth', async () => {
+    const authOnly = createApp({ service: 'auth' });
+    await request(authOnly).get('/api/stats').expect(404);
+    const created = await register('client', 'split-client@test.dev');
+    const me = await request(authOnly)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${created.body.token}`)
+      .expect(200);
+    assert.equal(me.body.user.email, 'split-client@test.dev');
+  });
 });

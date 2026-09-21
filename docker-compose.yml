@@ -1,3 +1,12 @@
+x-app-env: &app-env
+  NODE_ENV: production
+  CLIENT_URL: http://localhost:8080
+  MONGO_URI: mongodb://mongo:27017/freelancehub
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-compose-please-32chars}
+  JWT_EXPIRES_IN: 15m
+  JWT_REFRESH_EXPIRES_IN: 30d
+  SKIP_EMAIL_VERIFY: "true"
+
 services:
   mongo:
     image: mongo:7
@@ -9,22 +18,63 @@ services:
     environment:
       MONGO_INITDB_DATABASE: freelancehub
 
+  auth:
+    build: ./server
+    container_name: freelancehub-auth
+    ports:
+      - "5002:5002"
+    environment:
+      <<: *app-env
+      SERVICE: auth
+      PORT: 5002
+    depends_on:
+      - mongo
+
+  marketplace:
+    build: ./server
+    container_name: freelancehub-marketplace
+    ports:
+      - "5003:5003"
+    environment:
+      <<: *app-env
+      SERVICE: marketplace
+      PORT: 5003
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - mongo
+
+  realtime:
+    build: ./server
+    container_name: freelancehub-realtime
+    ports:
+      - "5004:5004"
+    environment:
+      <<: *app-env
+      SERVICE: realtime
+      PORT: 5004
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - mongo
+
   api:
     build: ./server
-    container_name: freelancehub-api
+    container_name: freelancehub-gateway
+    command: ["node", "src/gateway.js"]
     ports:
       - "5001:5001"
     environment:
       NODE_ENV: production
       PORT: 5001
       CLIENT_URL: http://localhost:8080
-      MONGO_URI: mongodb://mongo:27017/freelancehub
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-compose-please-32chars}
-      JWT_EXPIRES_IN: 15m
-      JWT_REFRESH_EXPIRES_IN: 30d
-      SKIP_EMAIL_VERIFY: "true"
+      AUTH_URL: http://auth:5002
+      MARKETPLACE_URL: http://marketplace:5003
+      REALTIME_URL: http://realtime:5004
     depends_on:
-      - mongo
+      - auth
+      - marketplace
+      - realtime
 
   web:
     build: ./client
@@ -36,3 +86,4 @@ services:
 
 volumes:
   mongo_data:
+  uploads_data:
