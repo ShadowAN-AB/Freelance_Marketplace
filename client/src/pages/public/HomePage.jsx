@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { PublicLayout } from '../layouts/Layouts'
-import { Button } from '../components/ui/Primitives'
+import { PublicLayout } from '../../layouts/Layouts'
+import { Button } from '../../components/ui/Primitives'
 
 export default function HomePage() {
   return (

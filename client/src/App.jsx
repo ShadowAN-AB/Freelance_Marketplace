@@ -1,6 +1,6 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute, RoleRoute, GuestRoute } from './components/layout/Guards'
 import { AppShell } from './layouts/Layouts'
 import HomePage from './pages/public/HomePage'
@@ -27,86 +27,12 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 
 const queryClient = new QueryClient()
 
-function AppLayout() {
+function SignedInLayout() {
   return (
     <ProtectedRoute>
-      <AppRoutes />
-    </ProtectedRoute>
-  )
-}
-
-function AppRoutes() {
-  const { user } = useAuth()
-  if (user.role === 'admin') return <Navigate to="/admin" replace />
-  return (
-    <AppShell>
-      <Routes>
-        <Route path="/app/dashboard" element={<DashboardPage />} />
-        <Route path="/app/profile" element={<ProfilePage />} />
-        <Route path="/app/settings" element={<SettingsPage />} />
-        <Route path="/app/messages" element={<MessagesPage />} />
-        <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
-        <Route path="/app/work" element={<WorkPage />} />
-        <Route
-          path="/app/projects/new"
-          element={
-            <RoleRoute roles={['client']}>
-              <PostProjectPage />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/app/projects"
-          element={
-            <RoleRoute roles={['client']}>
-              <MyProjectsPage />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/app/projects/:id/proposals"
-          element={
-            <RoleRoute roles={['client']}>
-              <ProjectProposalsPage />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/app/proposals"
-          element={
-            <RoleRoute roles={['freelancer']}>
-              <MyProposalsPage />
-            </RoleRoute>
-          }
-        />
-        <Route
-          path="/app/earnings"
-          element={
-            <RoleRoute roles={['freelancer']}>
-              <EarningsPage />
-            </RoleRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
-      </Routes>
-    </AppShell>
-  )
-}
-
-function AdminLayout() {
-  return (
-    <ProtectedRoute>
-      <RoleRoute roles={['admin']}>
-        <AppShell>
-          <Routes>
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/projects" element={<AdminProjectsPage />} />
-            <Route path="/admin/reports" element={<AdminReportsPage />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
-        </AppShell>
-      </RoleRoute>
+      <AppShell>
+        <Outlet />
+      </AppShell>
     </ProtectedRoute>
   )
 }
@@ -124,8 +50,25 @@ export default function App() {
             <Route path="/freelancers/:id" element={<FreelancerProfilePage />} />
             <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
             <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-            <Route path="/app/*" element={<AppLayout />} />
-            <Route path="/admin/*" element={<AdminLayout />} />
+
+            <Route element={<SignedInLayout />}>
+              <Route path="/app/dashboard" element={<DashboardPage />} />
+              <Route path="/app/profile" element={<ProfilePage />} />
+              <Route path="/app/settings" element={<SettingsPage />} />
+              <Route path="/app/messages" element={<MessagesPage />} />
+              <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
+              <Route path="/app/work" element={<WorkPage />} />
+              <Route path="/app/projects/new" element={<RoleRoute roles={['client']}><PostProjectPage /></RoleRoute>} />
+              <Route path="/app/projects" element={<RoleRoute roles={['client']}><MyProjectsPage /></RoleRoute>} />
+              <Route path="/app/projects/:id/proposals" element={<RoleRoute roles={['client']}><ProjectProposalsPage /></RoleRoute>} />
+              <Route path="/app/proposals" element={<RoleRoute roles={['freelancer']}><MyProposalsPage /></RoleRoute>} />
+              <Route path="/app/earnings" element={<RoleRoute roles={['freelancer']}><EarningsPage /></RoleRoute>} />
+              <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminDashboardPage /></RoleRoute>} />
+              <Route path="/admin/users" element={<RoleRoute roles={['admin']}><AdminUsersPage /></RoleRoute>} />
+              <Route path="/admin/projects" element={<RoleRoute roles={['admin']}><AdminProjectsPage /></RoleRoute>} />
+              <Route path="/admin/reports" element={<RoleRoute roles={['admin']}><AdminReportsPage /></RoleRoute>} />
+            </Route>
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

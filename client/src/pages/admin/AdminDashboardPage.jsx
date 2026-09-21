@@ -19,16 +19,18 @@ export default function AdminDashboardPage() {
         <Stat label="Proposals" value={data?.applications} />
         <Stat label="Freelancers" value={data?.users?.freelancer || 0} />
       </div>
-      <div className="mt-8 h-72 rounded-xl border border-line bg-white p-4">
+      <div className="mt-8 rounded-xl border border-line bg-white p-4">
         <p className="mb-3 text-sm font-semibold">Projects by status</p>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={projectChart}>
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="count" fill="#0f5c57" />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={projectChart}>
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#0f5c57" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )
