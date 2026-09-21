@@ -143,7 +143,81 @@ async function seed() {
 
   const deadline = (days) => new Date(Date.now() + days * 86400000);
 
-  const [dash, landing, inventory, seo] = await Project.create([
+  const [dash, landing, inventory, seo, hourlyOps] = await Project.create([
+    {
+      clientId: priya._id,
+      title: 'React dashboard for logistics ops',
+      description:
+        'We need a React dashboard that shows live truck status, delayed shipments, and a simple exception queue. Node API already exists. Prefer someone who has shipped ops tools, not marketing sites.',
+      category: 'Web Development',
+      skills: ['react', 'node.js', 'mongodb'],
+      budgetMin: 40000,
+      budgetMax: 70000,
+      deadline: deadline(28),
+      status: 'open',
+      pricingType: 'fixed',
+      milestones: [
+        { title: 'Status table', amount: 30000 },
+        { title: 'Exception queue', amount: 40000 },
+      ],
+    },
+    {
+      clientId: priya._id,
+      title: 'Brand landing page for Northline',
+      description:
+        'A sharp one-page site for a Series A logistics company. Strong typography, restrained motion, and a hiring desk feel rather than generic SaaS purple.',
+      category: 'UI/UX',
+      skills: ['ui/ux', 'figma', 'prototyping'],
+      budgetMin: 25000,
+      budgetMax: 40000,
+      deadline: deadline(5),
+      status: 'open',
+      pricingType: 'fixed',
+    },
+    {
+      clientId: priya._id,
+      title: 'Mobile inventory companion app',
+      description:
+        'React Native (or well-justified Flutter) app for warehouse staff: scan SKUs, mark exceptions, sync when back online. Hired and in progress.',
+      category: 'Mobile',
+      skills: ['react', 'javascript', 'node.js'],
+      budgetMin: 80000,
+      budgetMax: 120000,
+      deadline: deadline(45),
+      status: 'in_progress',
+      pricingType: 'fixed',
+      milestones: [
+        { title: 'Scan MVP', amount: 36000 },
+        { title: 'Offline sync', amount: 60000 },
+      ],
+    },
+    {
+      clientId: arjun._id,
+      title: 'SEO blog series for a design studio',
+      description:
+        'Eight long-form articles on hiring independent designers in India. Research, outlines, drafts, and meta. Completed.',
+      category: 'Writing',
+      skills: ['writing', 'seo', 'content strategy'],
+      budgetMin: 18000,
+      budgetMax: 24000,
+      deadline: deadline(-10),
+      status: 'completed',
+      pricingType: 'fixed',
+    },
+    {
+      clientId: priya._id,
+      title: 'Hourly pairing on the Node sync API',
+      description:
+        'Need a freelancer to pair on warehouse sync endpoints for a few days. Escrow cap is the max budget. Log hours; we approve before release.',
+      category: 'Web Development',
+      skills: ['node.js', 'express', 'mongodb'],
+      budgetMin: 8000,
+      budgetMax: 18000,
+      deadline: deadline(10),
+      status: 'open',
+      pricingType: 'hourly',
+    },
+  ]);
     {
       clientId: priya._id,
       title: 'React dashboard for logistics ops',
@@ -250,8 +324,25 @@ async function seed() {
     freelancerId: aisha._id,
     proposalId: inventoryProposal._id,
     amount: 96000,
+    pricingType: 'fixed',
     status: 'active',
     startDate: new Date(Date.now() - 12 * 86400000),
+    milestones: [
+      {
+        title: 'Scan MVP',
+        amount: 36000,
+        status: 'submitted',
+        workSubmittedAt: new Date(Date.now() - 1 * 86400000),
+        deliverables: [
+          { originalName: 'scan-mvp-notes.txt', url: '/uploads/.gitkeep', uploadedAt: new Date() },
+        ],
+      },
+      {
+        title: 'Offline sync',
+        amount: 60000,
+        status: 'pending',
+      },
+    ],
   });
   const seoContract = await Contract.create({
     projectId: seo._id,
@@ -259,10 +350,20 @@ async function seed() {
     freelancerId: leo._id,
     proposalId: seoProposal._id,
     amount: 20000,
+    pricingType: 'fixed',
     status: 'completed',
     startDate: new Date(Date.now() - 40 * 86400000),
     workSubmittedAt: new Date(Date.now() - 12 * 86400000),
     completedAt: new Date(Date.now() - 8 * 86400000),
+    milestones: [
+      {
+        title: 'Full project',
+        amount: 20000,
+        status: 'released',
+        workSubmittedAt: new Date(Date.now() - 12 * 86400000),
+        releasedAt: new Date(Date.now() - 8 * 86400000),
+      },
+    ],
   });
 
   await Payment.create([
@@ -271,6 +372,7 @@ async function seed() {
       clientId: priya._id,
       freelancerId: aisha._id,
       amount: 96000,
+      releasedAmount: 0,
       status: 'held',
     },
     {
@@ -278,6 +380,7 @@ async function seed() {
       clientId: arjun._id,
       freelancerId: leo._id,
       amount: 20000,
+      releasedAmount: 20000,
       status: 'released',
       releasedAt: new Date(Date.now() - 8 * 86400000),
     },
@@ -357,6 +460,13 @@ async function seed() {
       link: `/app/projects/${dash._id}/proposals`,
     },
     {
+      userId: priya._id,
+      type: 'work_submitted',
+      title: 'Milestone submitted',
+      body: 'Aisha Khan submitted Scan MVP on Mobile inventory companion app',
+      link: '/app/work',
+    },
+    {
       userId: aisha._id,
       type: 'proposal_accepted',
       title: 'Proposal accepted',
@@ -379,6 +489,7 @@ async function seed() {
   console.log('Admin  admin@freelancehub.dev');
   console.log('Client priya@freelancehub.dev  arjun@freelancehub.dev');
   console.log('Talent aisha@freelancehub.dev  kabir@freelancehub.dev  meera@freelancehub.dev  leo@freelancehub.dev');
+  console.log('Demo beat: Priya → due-soon landing, dashboard milestones, Active work → Release Scan MVP.');
   await mongoose.disconnect();
 }
 
