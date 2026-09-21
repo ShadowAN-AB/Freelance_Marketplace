@@ -59,9 +59,20 @@ Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do 
 
 - One pending proposal per freelancer per project; a withdrawn freelancer can rebid.
 - Accepting a proposal rejects other pending bids, creates a contract, and holds escrow.
-- Either party can cancel an active contract; held escrow is refunded.
+- Fixed jobs can split into 2–3 milestones that must sum to the max budget; hourly jobs hold `budgetMax` as a cap.
+- Either party can cancel an active contract; remaining held escrow is refunded.
 - Chat requires a proposal on that project. Socket join is participant-checked.
 - Reviews open only after the client completes the contract.
+
+## Viva demo (5 minutes)
+
+Password for every seeded account: `Password123!`
+
+1. Home → Viva demo login → Priya chip → Sign in.
+2. Dashboard shows due-soon work and **Ready to release · Scan MVP**.
+3. Active work → Release Scan MVP (₹36,000). Offline sync stays held.
+4. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
+5. Browse `/projects?pricingType=hourly` for the Node pairing listing.
 
 ## Layout
 
