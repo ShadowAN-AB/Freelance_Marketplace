@@ -67,5 +67,6 @@ Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do 
 ```
 client/   React app
 server/   Express API + Socket.IO
+docs/     HTML + PDF project documentation
 docker-compose.yml   Mongo + API + web
 ```
