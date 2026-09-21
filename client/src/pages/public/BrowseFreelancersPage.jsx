@@ -4,6 +4,7 @@ import { PublicLayout } from '../../layouts/Layouts'
 import { FreelancerCard } from '../../components/project/Cards'
 import { EmptyState, Input, Spinner } from '../../components/ui/Primitives'
 import api from '../../services/api'
+import { SaveSearchButton } from '../../components/SaveSearchButton'
 
 export default function BrowseFreelancersPage() {
   const [params, setParams] = useSearchParams()
@@ -37,10 +38,13 @@ export default function BrowseFreelancersPage() {
     <PublicLayout>
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="font-display text-4xl">Talent</h1>
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
+        <div className="mt-6 flex flex-wrap items-end gap-3">
+          <div className="grid flex-1 gap-3 md:grid-cols-3">
           <Input placeholder="Search name or skill" value={q} onChange={(e) => update({ q: e.target.value })} />
           <Input type="number" placeholder="Min hourly rate" value={minRate} onChange={(e) => update({ minRate: e.target.value })} />
           <Input type="number" placeholder="Max hourly rate" value={maxRate} onChange={(e) => update({ maxRate: e.target.value })} />
+          </div>
+          <SaveSearchButton kind="talent" params={{ q, minRate, maxRate }} />
         </div>
         {isLoading ? <Spinner /> : null}
         <div className="mt-8 grid gap-4 md:grid-cols-2">

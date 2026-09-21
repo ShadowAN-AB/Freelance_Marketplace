@@ -6,6 +6,11 @@ import { useAuth } from '../../context/AuthContext'
 import { getSocket } from '../../lib/socket'
 import { EmptyState, Input, Spinner } from '../../components/ui/Primitives'
 
+function isImage(attachment) {
+  const name = String(attachment?.originalName || attachment?.url || '').toLowerCase()
+  return /\.(png|jpe?g|webp)$/.test(name) || String(attachment?.url || '').startsWith('data:image')
+}
+
 export default function MessagesPage() {
   const { conversationId } = useParams()
   const { user } = useAuth()
@@ -69,9 +74,11 @@ function Thread({ id }) {
   const { user } = useAuth()
   const qc = useQueryClient()
   const [text, setText] = useState('')
+  const [file, setFile] = useState(null)
   const [typingLabel, setTypingLabel] = useState('')
   const typingTimer = useRef(null)
   const bottom = useRef(null)
+  const fileRef = useRef(null)
   const { data, isLoading } = useQuery({
     queryKey: ['messages', id],
     queryFn: async () => (await api.get(`/conversations/${id}/messages`, { params: { limit: 50 } })).data,
@@ -125,10 +132,22 @@ function Thread({ id }) {
   async function send(e) {
     e.preventDefault()
     const value = text.trim()
-    if (!value) return
+    if (!value && !file) return
+    emitTyping(false)
+    if (file) {
+      const fd = new FormData()
+      if (value) fd.append('text', value)
+      fd.append('file', file)
+      await api.post(`/conversations/${id}/messages`, fd)
+      setText('')
+      setFile(null)
+      if (fileRef.current) fileRef.current.value = ''
+      qc.invalidateQueries({ queryKey: ['messages', id] })
+      qc.invalidateQueries({ queryKey: ['conversations'] })
+      return
+    }
     const socket = getSocket()
     setText('')
-    emitTyping(false)
     if (socket) {
       socket.emit('message:send', { conversationId: id, text: value })
     } else {
@@ -146,7 +165,18 @@ function Thread({ id }) {
           return (
             <div key={m._id} className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? 'ml-auto bg-coral text-white' : 'bg-saffron/50'}`}>
               <p className="text-xs opacity-80">{m.senderId?.name}</p>
-              <p>{m.text}</p>
+              {m.text ? <p>{m.text}</p> : null}
+              {m.attachment?.url ? (
+                isImage(m.attachment) ? (
+                  <a href={m.attachment.url} target="_blank" rel="noreferrer">
+                    <img src={m.attachment.url} alt={m.attachment.originalName} className="mt-2 max-h-48 rounded-lg" />
+                  </a>
+                ) : (
+                  <a className="mt-1 block text-sm underline" href={m.attachment.url} download={m.attachment.originalName} target="_blank" rel="noreferrer">
+                    {m.attachment.originalName}
+                  </a>
+                )
+              ) : null}
             </div>
           )
         })}
@@ -155,14 +185,24 @@ function Thread({ id }) {
       <p className="min-h-6 px-4 text-xs text-muted" aria-live="polite">
         {typingLabel}
       </p>
-      <form onSubmit={send} className="flex gap-2 border-t border-line p-3">
+      <form onSubmit={send} className="flex items-center gap-2 border-t border-line p-3">
+        <input
+          ref={fileRef}
+          type="file"
+          className="hidden"
+          accept=".pdf,.zip,.png,.jpg,.jpeg,.webp"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
+        <button type="button" className="rounded-full border-2 border-ink/10 px-3 py-2 text-lg" aria-label="Attach file" onClick={() => fileRef.current?.click()}>
+          📎
+        </button>
         <Input
           value={text}
           onChange={(e) => {
             setText(e.target.value)
             emitTyping(true)
           }}
-          placeholder="Write a message"
+          placeholder={file ? `File: ${file.name}` : 'Write a message'}
         />
         <button className="rounded-full bg-coral px-4 py-2 font-bold text-white">Send</button>
       </form>

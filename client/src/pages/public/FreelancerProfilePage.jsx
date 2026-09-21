@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
@@ -34,7 +35,12 @@ export default function FreelancerProfilePage() {
               <p className="text-muted">{user.location}</p>
             </div>
           </div>
-          {me?.role === 'client' ? <SaveTalentToggle freelancerId={id} /> : null}
+          {me?.role === 'client' ? (
+            <div className="flex flex-col items-end gap-2">
+              <SaveTalentToggle freelancerId={id} />
+              <InviteToBid freelancerId={id} />
+            </div>
+          ) : null}
         </div>
         <p className="mt-6 leading-relaxed">{user.bio}</p>
         <p className="mt-4 font-semibold">
@@ -78,6 +84,38 @@ export default function FreelancerProfilePage() {
         </div>
       </div>
     </PublicLayout>
+  )
+}
+
+function InviteToBid({ freelancerId }) {
+  const { data } = useQuery({
+    queryKey: ['my-projects'],
+    queryFn: async () => (await api.get('/projects', { params: { mine: 'true', limit: 50 } })).data,
+  })
+  const open = (data?.data || []).filter((p) => p.status === 'open')
+  const [projectId, setProjectId] = useState('')
+  const invite = useMutation({
+    mutationFn: () => api.post(`/projects/${projectId}/invites`, { freelancerId }),
+  })
+  if (!open.length) return null
+  return (
+    <form
+      className="flex flex-col items-end gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (projectId) invite.mutate()
+      }}
+    >
+      <select className="rounded-md border border-line px-2 py-1 text-sm" value={projectId} onChange={(e) => setProjectId(e.target.value)} required>
+        <option value="">Invite to bid…</option>
+        {open.map((p) => (
+          <option key={p._id} value={p._id}>{p.title}</option>
+        ))}
+      </select>
+      <button type="submit" className="rounded-full border-2 border-ink/20 bg-white px-3 py-1 text-sm font-bold" disabled={invite.isPending}>
+        {invite.isSuccess ? 'Invited' : 'Send invite'}
+      </button>
+    </form>
   )
 }
 

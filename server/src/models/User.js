@@ -49,6 +49,17 @@ const userSchema = new mongoose.Schema(
     reviewCount: { type: Number, default: 0, min: 0 },
     savedProjectIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
     savedFreelancerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    savedSearches: [
+      {
+        name: { type: String, required: true, trim: true, maxlength: 80 },
+        q: { type: String, default: '', maxlength: 120 },
+        category: { type: String, default: '', maxlength: 40 },
+        dueSoon: { type: Boolean, default: false },
+        minRate: { type: Number, min: 0 },
+        maxRate: { type: Number, min: 0 },
+        kind: { type: String, enum: ['projects', 'talent'], default: 'projects' },
+      },
+    ],
     emailVerified: { type: Boolean, default: false },
     emailVerifyToken: { type: String, select: false, default: '' },
     passwordResetToken: { type: String, select: false, default: '' },

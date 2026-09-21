@@ -5,6 +5,7 @@ import { ProjectCard } from '../../components/project/Cards'
 import { EmptyState, Input, Spinner } from '../../components/ui/Primitives'
 import { CATEGORIES } from '../../lib/format'
 import api from '../../services/api'
+import { SaveSearchButton } from '../../components/SaveSearchButton'
 
 export default function BrowseProjectsPage() {
   const [params, setParams] = useSearchParams()
@@ -41,7 +42,8 @@ export default function BrowseProjectsPage() {
     <PublicLayout>
       <div className="mx-auto max-w-6xl px-4 py-10">
         <h1 className="font-display text-4xl">Open projects</h1>
-        <div className="mt-6 grid gap-3 md:grid-cols-3">
+        <div className="mt-6 flex flex-wrap items-end gap-3">
+          <div className="grid flex-1 gap-3 md:grid-cols-3">
           <Input
             placeholder="Search title or brief"
             value={q}
@@ -61,6 +63,8 @@ export default function BrowseProjectsPage() {
             <input type="checkbox" checked={dueSoon} onChange={(e) => update({ dueSoon: e.target.checked ? '1' : '', page: '1' })} />
             Due in 7 days
           </label>
+          </div>
+          <SaveSearchButton kind="projects" params={{ q, category, dueSoon }} />
         </div>
         {isLoading ? <Spinner /> : null}
         <div className="mt-8 grid gap-4 md:grid-cols-2">

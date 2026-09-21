@@ -7,6 +7,7 @@ const { ApiError } = require('../utils/apiError');
 const { notify } = require('../services/notify');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 const { isOnline } = require('../services/socket');
+const { persistUpload } = require('../services/storage');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 
 const openSchema = z.object({
@@ -96,16 +97,22 @@ const sendMessageHttp = asyncHandler(async (req, res) => {
   if (!conversation) throw new ApiError(404, 'Conversation not found');
   assertParticipant(conversation, req.user._id);
   const text = String(req.body.text || '').trim();
-  if (!text) throw new ApiError(400, 'Message text is required');
+  let attachment = null;
+  if (req.file) {
+    const stored = await persistUpload(req.file);
+    attachment = { originalName: stored.originalName, url: stored.url };
+  }
+  if (!text && !attachment) throw new ApiError(400, 'Message text or attachment is required');
   if (text.length > 2000) throw new ApiError(400, 'Message is too long');
   const message = await Message.create({
     conversationId: conversation._id,
     senderId: req.user._id,
     text,
+    attachment,
     readBy: [req.user._id],
   });
   conversation.lastMessageAt = new Date();
-  conversation.lastMessagePreview = text.slice(0, 200);
+  conversation.lastMessagePreview = (text || attachment?.originalName || 'Attachment').slice(0, 200);
   await conversation.save();
   const other = conversation.participants.find((id) => id.toString() !== req.user._id.toString());
   if (other && !isOnline(other)) {
@@ -113,7 +120,7 @@ const sendMessageHttp = asyncHandler(async (req, res) => {
       userId: other,
       type: 'message',
       title: `Message from ${req.user.name}`,
-      body: text.slice(0, 120),
+      body: (text || attachment?.originalName || 'Sent a file').slice(0, 120),
       link: `/app/messages/${conversation._id}`,
     });
   }

@@ -154,6 +154,36 @@ const unsaveTalent = asyncHandler(async (req, res) => {
   res.json({ ok: true, saved: false });
 });
 
+const savedSearchSchema = z.object({
+  body: z.object({
+    name: z.string().min(1).max(80),
+    q: z.string().max(120).optional().default(''),
+    category: z.string().max(40).optional().default(''),
+    dueSoon: z.boolean().optional().default(false),
+    minRate: z.number().min(0).optional(),
+    maxRate: z.number().min(0).optional(),
+    kind: z.enum(['projects', 'talent']).optional().default('projects'),
+  }),
+});
+
+const listSavedSearches = asyncHandler(async (req, res) => {
+  res.json({ data: req.user.savedSearches || [] });
+});
+
+const addSavedSearch = asyncHandler(async (req, res) => {
+  req.user.savedSearches = req.user.savedSearches || [];
+  if (req.user.savedSearches.length >= 12) throw new ApiError(400, 'You can save up to 12 searches');
+  req.user.savedSearches.push(req.body);
+  await req.user.save();
+  res.status(201).json({ data: req.user.savedSearches });
+});
+
+const deleteSavedSearch = asyncHandler(async (req, res) => {
+  req.user.savedSearches = (req.user.savedSearches || []).filter((s) => s._id.toString() !== req.params.id);
+  await req.user.save();
+  res.json({ data: req.user.savedSearches });
+});
+
 module.exports = {
   getUser,
   updateMe,
@@ -165,4 +195,8 @@ module.exports = {
   unsaveProject,
   saveTalent,
   unsaveTalent,
+  listSavedSearches,
+  addSavedSearch,
+  deleteSavedSearch,
+  savedSearchSchema,
 };

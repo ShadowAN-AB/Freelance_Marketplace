@@ -9,7 +9,11 @@ const messageSchema = new mongoose.Schema(
       index: true,
     },
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    text: { type: String, required: true, maxlength: 2000 },
+    text: { type: String, default: '', maxlength: 2000 },
+    attachment: {
+      originalName: { type: String, maxlength: 240 },
+      url: { type: String, maxlength: 400 },
+    },
     readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
