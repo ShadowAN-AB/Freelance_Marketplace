@@ -168,7 +168,7 @@
   <div>
     <span class="kicker">Technical documentation</span>
     <h1 class="display">FreelanceHub</h1>
-    <p class="sub">A MERN freelance marketplace for posting work, hiring talent, chatting, holding escrow, cancelling with refunds, and completing jobs with reviews. Tests, CI, and Docker are part of the repo; Stripe, S3, Redis, and SMTP stay optional.</p>
+    <p class="sub">A MERN freelance marketplace for posting work, hiring talent, chatting, holding escrow (full job, milestones, or hourly hours), cancelling with refunds, and completing jobs with reviews. Tests, CI, Playwright, and Docker are part of the repo; Stripe, S3, Redis, and SMTP stay optional.</p>
     <div class="badge-row">
       <span class="chip teal">React 19 + Vite 6</span>
       <span class="chip coral">Express + MongoDB</span>
@@ -179,8 +179,8 @@
   </div>
   <div class="meta">
     <p><strong>Repository:</strong> github.com/ShadowAN-AB/Freelance_Marketplace</p>
-    <p><strong>Local app:</strong> http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001 &nbsp;·&nbsp; <strong>Compose web:</strong> http://localhost:8080</p>
-    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.0</p>
+    <p><strong>Local app:</strong> http://127.0.0.1:5178 or http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001 &nbsp;·&nbsp; <strong>Compose web:</strong> http://localhost:8080</p>
+    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.1</p>
   </div>
 </section>
 
@@ -202,13 +202,14 @@
   <li><a href="#quality">14. Tests, CI, and quality</a></li>
   <li><a href="#setup">15. Local setup and demo</a></li>
   <li><a href="#ops">16. Operations and production hooks</a></li>
+  <li><a href="#viva">17. Viva talking points</a></li>
 </ol>
 
 <h2 id="intro">1. What this project is</h2>
 <p>FreelanceHub is a full-stack marketplace where <strong>clients</strong> post paid projects and <strong>freelancers</strong> bid. After a hire, the two parties chat, the freelancer submits work (optionally with files), the client can request revisions, cancel with an escrow refund, or approve. Simulated escrow is released on complete. Both sides can then leave a review. An <strong>admin</strong> account can inspect users, projects, contracts/escrow, reports, and an audit log.</p>
-<p>The product is a classic MERN monolith (MongoDB, Express, React, Node.js). The demo holds money as a <code>Payment</code> document: hire creates <code>held</code>, complete sets <code>released</code>, cancel sets <code>refunded</code>. Stripe, object storage, Redis, and SMTP are env-optional. If they are unset, the same hire loop still works.</p>
+<p>The product is a classic MERN monolith (MongoDB, Express, React, Node.js). The demo holds money as one <code>Payment</code> per contract: hire creates <code>held</code>, complete or milestone/hour approval increments <code>releasedAmount</code>, cancel sets <code>refunded</code>. Stripe, object storage, Redis, and SMTP are env-optional. If they are unset, the same hire loop still works.</p>
 <div class="callout">
-  <strong>One-line summary.</strong> Post → propose (or rebid after withdraw) → hire (escrow hold) → chat → submit work → optional revision <em>or</em> cancel/refund → complete → review.
+  <strong>One-line summary.</strong> Post (fixed, milestones, or hourly) → propose (or rebid after withdraw) → hire (escrow hold) → chat → submit work → optional revision <em>or</em> cancel/refund → release (full, slice, or hours) → review.
 </div>
 
 <h2 id="goals">2. Goals and non-goals</h2>
@@ -221,6 +222,8 @@
       <li>Project posting, URL-backed search, skill matching</li>
       <li>One pending proposal per freelancer per project; rebid after withdraw</li>
       <li>Hire, contract, escrow hold / release / refund</li>
+      <li>Fixed-price milestones with partial release, or hourly time against a budget cap</li>
+      <li>Invite-to-bid, chat attachments, saved searches, CSRF on cookie sessions</li>
       <li>Deliverable uploads (disk or optional S3)</li>
       <li>Project-scoped chat with join auth, multi-tab presence, typing</li>
       <li>Saved items, shortlists, reports, verified-skill tags</li>
@@ -234,7 +237,6 @@
     <ul>
       <li>Google / social login</li>
       <li>LLM matching or generated cover letters</li>
-      <li>Milestones / partial releases</li>
       <li>Native mobile apps</li>
       <li>Multi-currency or a microservice split</li>
       <li>Mandatory Stripe — it is a vertical slice behind env vars, not the default demo</li>
@@ -335,16 +337,16 @@
       <text x="95" y="76" text-anchor="middle" fill="#d4ebe4">role, saves, verify</text>
       <rect x="230" y="20" width="150" height="90" rx="8" fill="#12211e"/>
       <text x="305" y="55" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Project</text>
-      <text x="305" y="76" text-anchor="middle" fill="#9ad9cc">budget, skills, status</text>
+      <text x="305" y="76" text-anchor="middle" fill="#9ad9cc">pricing, milestones, skills</text>
       <rect x="440" y="20" width="150" height="90" rx="8" fill="#ff4d2e"/>
       <text x="515" y="55" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Proposal</text>
       <text x="515" y="76" text-anchor="middle" fill="#ffe3dc">bid, shortlisted</text>
       <rect x="650" y="20" width="170" height="90" rx="8" fill="#00856f"/>
       <text x="735" y="55" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Contract</text>
-      <text x="735" y="76" text-anchor="middle" fill="#d4ebe4">work, dispute, files</text>
+      <text x="735" y="76" text-anchor="middle" fill="#d4ebe4">milestones, hours, files</text>
       <rect x="20" y="180" width="150" height="80" rx="8" fill="#12211e"/>
       <text x="95" y="214" text-anchor="middle" fill="#ffb703" font-size="14" font-family="Georgia">Payment</text>
-      <text x="95" y="234" text-anchor="middle" fill="#9ad9cc">held / released / refunded</text>
+      <text x="95" y="234" text-anchor="middle" fill="#9ad9cc">held + releasedAmount</text>
       <rect x="230" y="180" width="150" height="80" rx="8" fill="#ff4d2e"/>
       <text x="305" y="214" text-anchor="middle" fill="#fff" font-size="14" font-family="Georgia">Conversation</text>
       <text x="305" y="234" text-anchor="middle" fill="#ffe3dc">project + pair</text>
@@ -376,7 +378,9 @@
     <tr><td>Project</td><td><code>open</code> → <code>in_progress</code> → <code>completed</code> (or <code>cancelled</code>)</td></tr>
     <tr><td>Proposal</td><td><code>pending</code>, <code>accepted</code>, <code>rejected</code>, <code>withdrawn</code> (withdrawn may become pending again)</td></tr>
     <tr><td>Contract</td><td><code>active</code>, <code>completed</code>, <code>cancelled</code> (stores <code>disputeReason</code>)</td></tr>
-    <tr><td>Payment</td><td><code>held</code>, <code>released</code>, <code>refunded</code> (<code>simulated</code> or <code>stripe</code>)</td></tr>
+    <tr><td>Project.pricingType</td><td><code>fixed</code> (optional 2–3 planned milestones) or <code>hourly</code></td></tr>
+    <tr><td>Payment</td><td><code>held</code>, <code>released</code>, <code>refunded</code> plus <code>releasedAmount</code> for partial milestone/hour payouts</td></tr>
+    <tr><td>Contract.milestones</td><td><code>pending</code> → <code>submitted</code> → <code>released</code> (revision returns to pending)</td></tr>
     <tr><td>Report</td><td><code>open</code>, <code>reviewed</code>, <code>dismissed</code></td></tr>
   </tbody>
 </table>
@@ -397,7 +401,7 @@
     </tr>
     <tr>
       <td>Client</td>
-      <td>Post/edit/cancel open projects, shortlist and accept/reject, save talent, request revision, approve (release), or cancel/refund, report, chat after a proposal exists.</td>
+      <td>Post/edit/cancel open projects (fixed, milestones, or hourly), invite talent, shortlist and accept/reject, save talent, request revision, release a milestone or hours, or cancel/refund, report, chat after a proposal exists.</td>
       <td>Dashboard, Post project, My projects, Proposals inbox, Active work, Saved, Messages, Profile, Settings</td>
     </tr>
     <tr>
@@ -441,7 +445,7 @@
 <ul>
   <li>Unique index on <code>{ projectId, freelancerId }</code>. A second pending bid is 409. A <code>withdrawn</code> row is updated back to <code>pending</code>.</li>
   <li>You cannot bid on your own project or on a non-open project. After a proposal exists, the project detail page shows status instead of a second form.</li>
-  <li>Accepting a bid rejects other pending bids, sets the project to <code>in_progress</code>, creates a contract and a held payment, and opens a conversation.</li>
+  <li>Accepting a bid rejects other pending bids, sets the project to <code>in_progress</code>, creates a contract (copying planned milestones, or a single “Full project” slice, or an hourly cap at <code>budgetMax</code>) and a held payment, and opens a conversation.</li>
   <li>Chat requires a pending or accepted proposal. Socket <code>conversation:join</code> is participant-checked (join is not an open room id).</li>
   <li>Only the hired freelancer can submit work. Only the client can request a revision or complete.</li>
   <li>Either party (or admin) can cancel an <code>active</code> contract with a reason; held escrow becomes <code>refunded</code> and the project is cancelled.</li>
@@ -456,16 +460,16 @@
 <p>Profiles store bio, location, avatar, freelancer skills/rate/portfolio images/availability, verified-skill tags (admin-set), or client company name. Public client pages list that company’s projects.</p>
 
 <h3>9.2 Projects and search</h3>
-<p>Browse keeps <code>q</code>, category, due-soon, and page in the URL. Talent browse keeps hourly-rate bounds in the URL. Cards show the client company. Matching score is skill overlap, capped at 100%.</p>
+<p>Browse keeps <code>q</code>, category, pricing type (fixed/hourly), due-soon, and page in the URL. Cards show <strong>Fixed price</strong>, <strong>Fixed · N milestones</strong>, or <strong>Hourly</strong>. Project detail lists the planned milestone table. Talent browse keeps hourly-rate bounds in the URL. Matching score is skill overlap, capped at 100%.</p>
 
 <h3>9.3 Proposals and shortlist</h3>
 <p>Cover letter, bid amount, estimated days. Clients star pending proposals. Inbox sorts shortlisted first.</p>
 
 <h3>9.4 Work, deliverables, revisions, disputes</h3>
-<p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. The work card can Approve, Request revision, or Cancel &amp; refund escrow.</p>
+<p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. The work card can Approve the whole job, release one milestone, approve hourly time against the escrow cap, Request revision, or Cancel &amp; refund remaining escrow. Partial payouts live on <code>Payment.releasedAmount</code> — there is still one payment row per contract.</p>
 
-<h3>9.5 Saved items</h3>
-<p>Freelancers bookmark projects; clients bookmark talent. <code>/app/saved</code> lists them.</p>
+<h3>9.5 Saved items and saved searches</h3>
+<p>Freelancers bookmark projects; clients bookmark talent. <code>/app/saved</code> lists them. Named saved searches replay browse filters from the dashboard.</p>
 
 <h3>9.6 Messaging, unread, presence, typing</h3>
 <p>Unread count is threads whose latest message is not in <code>readBy</code>. Presence is a <strong>set of socket ids per user</strong> so a second tab does not kick the first offline. Chat notifications fire only if the other party is offline. Typing events stay inside the conversation room.</p>
@@ -476,16 +480,23 @@
 <h3>9.8 Reports and admin</h3>
 <p>Users report a user or project. Admins review or dismiss (audited). Admins block users (audited), verify skills (audited), and open contracts with escrow status. There is no impersonate control.</p>
 
+<h3>9.9 Desk extras (presentation pack)</h3>
+<p>Project edit, proposal compare table, notifications inbox with type filter, invite-to-bid, chat attachments, printable invoice at <code>/app/work/:id/invoice</code>, CSRF token cookie <code>fh_csrf</code> (skipped for Bearer and GET), and a Playwright hire-loop smoke in CI.</p>
+
 <h2 id="client">10. Client application</h2>
 <table>
   <thead><tr><th>Path</th><th>Who</th><th>Page</th></tr></thead>
   <tbody>
-    <tr><td><code>/</code></td><td>Public</td><td>Marketing home</td></tr>
-    <tr><td><code>/projects</code>, <code>/projects/:id</code></td><td>Public</td><td>URL filters; bid form or “your proposal” status</td></tr>
+    <tr><td><code>/</code></td><td>Public</td><td>Home plus five-minute viva beat and demo accounts</td></tr>
+    <tr><td><code>/projects</code>, <code>/projects/:id</code></td><td>Public</td><td>URL filters including pricing type; milestone plan; bid form or “your proposal”</td></tr>
     <tr><td><code>/freelancers</code>, <code>/freelancers/:id</code></td><td>Public</td><td>Hourly-rate filters, verified skills, portfolio images</td></tr>
     <tr><td><code>/clients/:id</code></td><td>Public</td><td>Client company page and their projects</td></tr>
-    <tr><td><code>/login</code>, <code>/register</code>, <code>/forgot-password</code>, <code>/reset-password</code>, <code>/verify-email</code></td><td>Guest</td><td>Auth and recovery</td></tr>
-    <tr><td><code>/app/work</code></td><td>Both</td><td>Files, revision, approve, cancel/refund, review</td></tr>
+    <tr><td><code>/login</code></td><td>Guest</td><td>One-click Priya / Aisha / Admin fill</td></tr>
+    <tr><td><code>/register</code>, <code>/forgot-password</code>, <code>/reset-password</code>, <code>/verify-email</code></td><td>Guest</td><td>Auth and recovery</td></tr>
+    <tr><td><code>/app/dashboard</code></td><td>Signed in</td><td>Due-soon, saved searches, client “Active work” with Scan MVP ready to release</td></tr>
+    <tr><td><code>/app/work</code></td><td>Both</td><td>Milestones, hours, files, revision, release, cancel/refund, review</td></tr>
+    <tr><td><code>/app/work/:id/invoice</code></td><td>Both</td><td>Printable invoice of held / released / refunded</td></tr>
+    <tr><td><code>/app/notifications</code></td><td>Signed in</td><td>Typed inbox</td></tr>
     <tr><td><code>/app/messages</code></td><td>Both</td><td>Threads, presence, typing</td></tr>
     <tr><td><code>/admin/contracts</code>, <code>/admin/audit</code></td><td>Admin</td><td>Escrow list and action log</td></tr>
   </tbody>
@@ -502,7 +513,10 @@
     <tr><td>GET</td><td>/auth/me</td><td>User</td><td>Current user</td></tr>
     <tr><td>GET / POST</td><td>/auth/verify-email, /forgot-password, /reset-password</td><td>Public</td><td>Email flows</td></tr>
     <tr><td>PATCH</td><td>/auth/password</td><td>User</td><td>Change password</td></tr>
+    <tr><td>GET</td><td>/projects</td><td>Optional</td><td>List/filter by q, category, dueSoon, pricingType</td></tr>
     <tr><td>GET</td><td>/projects/:id</td><td>Optional</td><td>Project + <code>myProposal</code> for the bidder</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/milestones/:mid/release</td><td>Client</td><td>Partial escrow release</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/time-entries/:tid/approve</td><td>Client</td><td>Hourly hours against the cap</td></tr>
     <tr><td>POST</td><td>/contracts/:id/cancel</td><td>Party</td><td>{ reason } → refund held escrow</td></tr>
     <tr><td>GET</td><td>/payments/me, /payments/mode</td><td>User</td><td>Ledger; <code>simulated</code> vs <code>stripe</code></td></tr>
     <tr><td>POST</td><td>/payments/webhook</td><td>Stripe signature</td><td>Ignored unless secrets are set</td></tr>
@@ -549,15 +563,15 @@
   <li>CORS origin is exactly <code>CLIENT_URL</code> with credentials. Socket.IO uses the same origin.</li>
   <li>Zod on mutating routes. Multer rejects disallowed types. JSON body 1 MB. Auth rate limits skipped only in tests.</li>
   <li>Request id header <code>X-Request-Id</code> on every response. Structured JSON logs.</li>
-  <li>Controllers still enforce ownership (hired party, conversation participant, and so on).</li>
+  <li>CSRF: mutating cookie requests need header <code>X-CSRF-Token</code> matching cookie <code>fh_csrf</code>. Bearer JWT and GET/HEAD skip the check so API tests stay green.</li>
 </ul>
 <div class="warn">
   <strong>Demo secrets.</strong> Rotate <code>JWT_SECRET</code> before any shared deploy. Disk <code>server/uploads/</code> does not survive multiple API instances — set S3 for that. Payments are simulated unless Stripe env vars are set.
 </div>
 
 <h2 id="quality">14. Tests, CI, and quality</h2>
-<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). Coverage includes register/login, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, chat 403 for outsiders, cancel → refunded, and <code>myProposal</code> on project detail.</p>
-<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers. ESLint and Prettier configs live in each package. GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build.</p>
+<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has 11 cases: register/login, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, and pricing-type list filter.</p>
+<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (including pricing labels). <code>cd client &amp;&amp; npm run e2e</code> is the Playwright hire-loop smoke (register → post → bid → accept → submit). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
 
 <h2 id="setup">15. Local setup and demo</h2>
 <h3>Prerequisites</h3>
@@ -568,7 +582,7 @@
 <pre>cp .env.example server/.env
 cd server && npm install && npm run seed && npm run dev
 cd client && npm install && npm run dev</pre>
-<p>Open <strong>http://localhost:5178</strong>. Health: <strong>http://localhost:5001/health</strong> (includes <code>mongo: true</code>).</p>
+<p>Open <strong>http://127.0.0.1:5178</strong> or <strong>http://localhost:5178</strong>. Health: <strong>http://localhost:5001/health</strong> (includes <code>mongo: true</code>). Keep <code>SKIP_EMAIL_VERIFY=true</code> in <code>server/.env</code> for the viva.</p>
 <pre>JWT_SECRET=replace-with-a-long-random-string docker compose up --build</pre>
 <p>Compose serves nginx on <strong>http://localhost:8080</strong> and proxies API/socket/uploads. Do not run <code>npm run seed</code> in production — the seed script exits if <code>NODE_ENV=production</code>.</p>
 <p>Every seeded account uses password <code>Password123!</code>.</p>
@@ -576,7 +590,7 @@ cd client && npm install && npm run dev</pre>
   <thead><tr><th>Role</th><th>Email</th><th>Notes</th></tr></thead>
   <tbody>
     <tr><td>Admin</td><td>admin@freelancehub.dev</td><td>Users, contracts, audit, reports</td></tr>
-    <tr><td>Client</td><td>priya@freelancehub.dev</td><td>Open projects + in-progress inventory hire with Aisha</td></tr>
+    <tr><td>Client</td><td>priya@freelancehub.dev</td><td>Due-soon landing page, dashboard milestones, inventory hire with Scan MVP submitted</td></tr>
     <tr><td>Client</td><td>arjun@freelancehub.dev</td><td>Completed SEO contract with Leo</td></tr>
     <tr><td>Freelancer</td><td>aisha@freelancehub.dev</td><td>Pending dashboard bid + active mobile contract; verified React/Node tags after a fresh seed</td></tr>
     <tr><td>Freelancer</td><td>kabir@…, meera@…, leo@…</td><td>Extra bids and a completed job</td></tr>
@@ -584,12 +598,12 @@ cd client && npm install && npm run dev</pre>
 </table>
 <h3>Ten-minute walkthrough</h3>
 <ol>
-  <li>Log in as Aisha. Open the logistics dashboard project — you should see <strong>Your proposal / Pending</strong>, not a second form.</li>
-  <li>Log in as Priya. Work card: download deliverables, request revision, or Cancel &amp; refund (do not cancel the seeded hire if you still want that demo path). Approve still releases escrow after a current submission.</li>
-  <li>Withdraw a pending bid as a freelancer, then rebid on the same project.</li>
-  <li>Browse <code>/projects?q=react</code> and <code>/freelancers?minRate=1500</code> — filters stay in the URL. Company names show on project cards.</li>
-  <li>Open Messages on two accounts: presence dots, typing line, quieter alerts when the other tab is online.</li>
-  <li>As admin, open Contracts (escrow column) and Audit after a block or skill verify.</li>
+  <li>Home page → <strong>Viva demo login</strong> → Priya chip → Sign in.</li>
+  <li>Dashboard: due-soon landing, Active work says <strong>Ready to release · Scan MVP</strong>.</li>
+  <li>Open Active work. Release Scan MVP. Escrow drops by ₹36,000; Offline sync stays held.</li>
+  <li>Log out. Login as Aisha. Open the logistics dashboard — <strong>Your proposal / Pending</strong>, not a second form.</li>
+  <li>Browse <code>/projects?pricingType=hourly</code> for the Node pairing listing. Filters stay in the URL.</li>
+  <li>Open Messages on two accounts: presence dots, typing line. As admin, open Contracts (escrow column) and Audit.</li>
 </ol>
 
 <h2 id="ops">16. Operations and production hooks</h2>
@@ -600,7 +614,7 @@ cd client && npm install && npm run dev</pre>
     <tr><td>Mail</td><td>Nodemailer JSON transport (logged)</td><td><code>SMTP_URL</code>, <code>MAIL_FROM</code></td></tr>
     <tr><td>Files</td><td><code>server/uploads/</code></td><td><code>AWS_S3_BUCKET</code> (+ region / public URL)</td></tr>
     <tr><td>Presence</td><td>In-memory socket id sets</td><td><code>REDIS_URL</code> → Socket.IO Redis adapter</td></tr>
-    <tr><td>Payments</td><td><code>Payment.status</code> flipped in complete/cancel</td><td><code>STRIPE_SECRET_KEY</code> + webhook secret</td></tr>
+    <tr><td>Payments</td><td>One <code>Payment</code> per contract; <code>releasedAmount</code> for slices</td><td><code>STRIPE_SECRET_KEY</code> + webhook secret</td></tr>
     <tr><td>Health</td><td><code>/health</code> 200/503 from Mongo readyState</td><td>Load balancer on that URL</td></tr>
   </tbody>
 </table>
@@ -610,9 +624,28 @@ cd client && npm install && npm run dev</pre>
   <li>If port 27017 already has a local MongoDB, Docker’s mapped port will fail or you will see an empty database. Point <code>MONGO_URI</code> at the instance that contains the seed.</li>
 </ul>
 <div class="note">
-  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, including the sequential feature pack (saved items, revisions, deliverables, shortlists, unread badges, settings/reports, presence) and the improvement slices (UX/session/sockets, tests/CI, cancel/rebid/search, cookie auth/Docker/optional adapters).
+  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.1: sequential feature pack, improvement slices, desk pack (milestones, hourly, invites, attachments, CSRF, Playwright), and viva-ready seed/UI.
 </div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
+
+<h2 id="viva">17. Viva talking points</h2>
+<p>Memorise these answers. Examiners usually ask “why”, not “show me another screen”.</p>
+<table>
+  <thead><tr><th>Likely question</th><th>What to say</th></tr></thead>
+  <tbody>
+    <tr><td>Why a MERN monolith, not microservices?</td><td>College demo has one team and one database. Splitting auth/projects/payments would add network hops without a production load. The API is still modular: models, controllers, routes, services.</td></tr>
+    <tr><td>Is the money real?</td><td>No. Hire writes a <code>Payment</code> with status <code>held</code>. Complete or milestone/hour approval increments <code>releasedAmount</code>. Cancel sets <code>refunded</code>. Stripe is behind env vars for a later slice.</td></tr>
+    <tr><td>Why cookies and Bearer?</td><td>The SPA sends httpOnly cookies so XSS cannot steal the access token. Socket.IO and Playwright still use <code>Authorization: Bearer</code>. CSRF is required only for cookie POSTs; Bearer skips it.</td></tr>
+    <tr><td>How do you stop double bids?</td><td>Unique index on <code>{ projectId, freelancerId }</code>. A second pending bid is 409. Withdraw sets <code>withdrawn</code>; the same row can go back to <code>pending</code>.</td></tr>
+    <tr><td>Fixed vs hourly?</td><td>Fixed may split into 2–3 milestones that must sum to <code>budgetMax</code>. Hourly holds <code>budgetMax</code> as a cap; approved hours cannot exceed remaining escrow.</td></tr>
+    <tr><td>How is chat authorised?</td><td>HTTP messages and socket <code>conversation:join</code> both check that the user is a participant. Join is not an open room id.</td></tr>
+    <tr><td>What is tested?</td><td>11 API tests on a throwaway Mongo database, Vitest for INR/pricing labels, Playwright smoke for the hire loop, GitHub Actions on <code>main</code>.</td></tr>
+    <tr><td>What would you do next if this shipped?</td><td>Rotate <code>JWT_SECRET</code>, turn off <code>SKIP_EMAIL_VERIFY</code>, put files on S3, turn on Stripe, put Socket.IO on Redis if you run more than one API process.</td></tr>
+  </tbody>
+</table>
+<div class="callout">
+  <strong>Demo sentence.</strong> “Priya hired Aisha on a two-slice inventory app. Scan MVP is already submitted. I will release that slice, leave Offline sync held, and show that one Payment row tracks both amounts.”
+</div>
 
 </body>
 </html>
