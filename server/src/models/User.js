@@ -15,6 +15,7 @@ const freelancerProfileSchema = new mongoose.Schema(
     skills: [{ type: String, trim: true }],
     hourlyRate: { type: Number, min: 0, default: 0 },
     portfolio: [portfolioItemSchema],
+    verifiedSkills: [{ type: String, trim: true }],
     availability: {
       type: String,
       enum: ['available', 'busy', 'unavailable'],
@@ -48,6 +49,11 @@ const userSchema = new mongoose.Schema(
     reviewCount: { type: Number, default: 0, min: 0 },
     savedProjectIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
     savedFreelancerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    emailVerified: { type: Boolean, default: false },
+    emailVerifyToken: { type: String, select: false, default: '' },
+    passwordResetToken: { type: String, select: false, default: '' },
+    passwordResetExpires: { type: Date, select: false },
+    refreshTokenHash: { type: String, select: false, default: '' },
   },
   { timestamps: true }
 );

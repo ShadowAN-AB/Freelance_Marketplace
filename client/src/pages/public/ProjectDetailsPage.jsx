@@ -5,12 +5,14 @@ import { PublicLayout } from '../../layouts/Layouts'
 import { Button, ErrorText, Field, Spinner, StatusBadge, Textarea, Input } from '../../components/ui/Primitives'
 import { inr, formatDate, errorMessage } from '../../lib/format'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import { ReportControl } from '../../components/ReportControl'
 import api from '../../services/api'
 
 export default function ProjectDetailsPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const toast = useToast()
   const qc = useQueryClient()
   const [form, setForm] = useState({ coverLetter: '', bidAmount: '', estimatedDays: '' })
   const [error, setError] = useState('')
@@ -28,15 +30,29 @@ export default function ProjectDetailsPage() {
     onSuccess: () => {
       setError('')
       qc.invalidateQueries({ queryKey: ['project', id] })
-      alert('Proposal sent')
+      toast.push('Proposal sent')
     },
     onError: (err) => setError(errorMessage(err)),
   })
 
-  if (isLoading) return <PublicLayout><Spinner /></PublicLayout>
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <Spinner />
+      </PublicLayout>
+    )
+  }
   const project = data?.project
-  if (!project) return <PublicLayout><p className="p-8">Project not found.</p></PublicLayout>
+  if (!project) {
+    return (
+      <PublicLayout>
+        <p className="p-8">Project not found.</p>
+      </PublicLayout>
+    )
+  }
   const isOwner = user && project.clientId?._id === user._id
+  const myProposal = data?.myProposal
+  const canBid = user?.role === 'freelancer' && project.status === 'open' && (!myProposal || myProposal.status === 'withdrawn')
 
   return (
     <PublicLayout>
@@ -50,23 +66,48 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
         <p className="mt-3 text-muted">
-          Posted by {project.clientId?.name} · due {formatDate(project.deadline)}
+          Posted by{' '}
+          {project.clientId?._id ? (
+            <Link className="font-semibold text-teal" to={`/clients/${project.clientId._id}`}>
+              {project.clientId?.clientProfile?.companyName || project.clientId?.name}
+            </Link>
+          ) : (
+            project.clientId?.name
+          )}{' '}
+          · due {formatDate(project.deadline)}
         </p>
         <p className="mt-6 whitespace-pre-wrap leading-relaxed">{project.description}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {project.skills.map((s) => (
-            <span key={s} className="rounded-full bg-teal/15 px-3 py-1 text-sm font-bold text-teal">{s}</span>
+            <span key={s} className="rounded-full bg-teal/15 px-3 py-1 text-sm font-bold text-teal">
+              {s}
+            </span>
           ))}
         </div>
         <p className="mt-6 font-semibold">
           {inr(project.budgetMin)} – {inr(project.budgetMax)}
         </p>
         {isOwner ? (
-          <Link to={`/app/projects/${id}/proposals`} className="mt-6 inline-block text-teal font-semibold">
+          <Link to={`/app/projects/${id}/proposals`} className="mt-6 inline-block font-semibold text-teal">
             Review proposals →
           </Link>
         ) : null}
-        {user?.role === 'freelancer' && project.status === 'open' ? (
+        {myProposal && user?.role === 'freelancer' ? (
+          <div className="mt-8 rounded-2xl border-2 border-ink/10 bg-white p-5">
+            <h2 className="font-display text-2xl">Your proposal</h2>
+            <p className="mt-2">
+              Status: <StatusBadge status={myProposal.status} />
+            </p>
+            <p className="mt-2 font-semibold">
+              {inr(myProposal.bidAmount)} · {myProposal.estimatedDays} days
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-muted">{myProposal.coverLetter}</p>
+            {myProposal.status === 'withdrawn' ? (
+              <p className="mt-3 text-sm text-muted">You withdrew this bid. You can submit a new one below.</p>
+            ) : null}
+          </div>
+        ) : null}
+        {canBid ? (
           <form
             className="mt-10 space-y-3 rounded-2xl border-2 border-ink/10 bg-white p-5"
             onSubmit={(e) => {
@@ -74,7 +115,7 @@ export default function ProjectDetailsPage() {
               propose.mutate()
             }}
           >
-            <h2 className="font-display text-2xl">Submit a proposal</h2>
+            <h2 className="font-display text-2xl">{myProposal?.status === 'withdrawn' ? 'Submit a new proposal' : 'Submit a proposal'}</h2>
             <ErrorText error={error} />
             <Field label="Cover letter">
               <Textarea rows={5} value={form.coverLetter} onChange={(e) => setForm({ ...form, coverLetter: e.target.value })} required />
@@ -92,7 +133,10 @@ export default function ProjectDetailsPage() {
         ) : null}
         {!user ? (
           <p className="mt-8">
-            <Link className="text-teal" to="/login">Log in</Link> as a freelancer to propose.
+            <Link className="text-teal" to="/login">
+              Log in
+            </Link>{' '}
+            as a freelancer to propose.
           </p>
         ) : null}
         <div className="mt-10">
@@ -112,9 +156,7 @@ function SaveProjectToggle({ projectId }) {
   const saved = (data?.projects || []).some((p) => p._id === projectId)
   const toggle = useMutation({
     mutationFn: () =>
-      saved
-        ? api.delete(`/users/me/saved-projects/${projectId}`)
-        : api.post(`/users/me/saved-projects/${projectId}`),
+      saved ? api.delete(`/users/me/saved-projects/${projectId}`) : api.post(`/users/me/saved-projects/${projectId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-me'] }),
   })
   return (

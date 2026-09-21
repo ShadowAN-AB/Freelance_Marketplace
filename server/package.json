@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
-    "seed": "node src/seeds/seed.js"
+    "seed": "node src/seeds/seed.js",
+    "test": "node --test test/*.test.js",
+    "lint": "eslint src test",
+    "format": "prettier --write \"src/**/*.js\" \"test/**/*.js\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -18,7 +21,19 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "multer": "^1.4.5-lts.2",
+    "nodemailer": "^6.9.16",
     "socket.io": "^4.8.1",
     "zod": "^3.24.2"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "ioredis": "^5.6.0",
+    "stripe": "^17.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^3.5.3",
+    "supertest": "^7.0.0"
   }
 }

@@ -46,6 +46,9 @@ export default function LoginPage() {
           </Field>
           <Button disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Button>
         </form>
+        <p className="mt-4 text-sm font-semibold">
+          <Link to="/forgot-password" className="text-teal">Forgot password?</Link>
+        </p>
         <p className="mt-6 text-sm font-semibold">
           New here? <Link to="/register" className="text-coral">Create an account</Link>
         </p>

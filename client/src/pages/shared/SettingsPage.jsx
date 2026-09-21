@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import { Button, ErrorText, Field, Input } from '../../components/ui/Primitives'
 import { errorMessage } from '../../lib/format'
 import api from '../../services/api'
 
 export default function SettingsPage() {
   const { user, logout } = useAuth()
+  const toast = useToast()
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
@@ -26,6 +28,7 @@ export default function SettingsPage() {
         newPassword: form.newPassword,
       })
       setOk('Password updated')
+      toast.push('Password updated')
       setForm({ currentPassword: '', newPassword: '', confirm: '' })
     } catch (err) {
       setError(errorMessage(err))

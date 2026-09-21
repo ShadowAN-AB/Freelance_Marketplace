@@ -7,9 +7,9 @@ export function connectSocket(token) {
     socket.disconnect()
     socket = null
   }
-  if (!token) return null
   socket = io('/', {
-    auth: { token },
+    auth: token ? { token } : {},
+    withCredentials: true,
     transports: ['websocket', 'polling'],
   })
   return socket

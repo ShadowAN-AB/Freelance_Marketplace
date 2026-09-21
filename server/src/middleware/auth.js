@@ -1,11 +1,10 @@
 const User = require('../models/User');
-const { verifyToken } = require('../utils/tokens');
+const { verifyToken, readAccessToken } = require('../utils/tokens');
 const { ApiError } = require('../utils/apiError');
 const { asyncHandler } = require('../utils/asyncHandler');
 
 const protect = asyncHandler(async (req, _res, next) => {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const token = readAccessToken(req);
   if (!token) throw new ApiError(401, 'Authentication required');
   const payload = verifyToken(token);
   const user = await User.findById(payload.id);
@@ -25,8 +24,7 @@ const authorize =
   };
 
 const optionalAuth = asyncHandler(async (req, _res, next) => {
-  const header = req.headers.authorization || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const token = readAccessToken(req);
   if (!token) return next();
   try {
     const payload = verifyToken(token);

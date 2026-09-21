@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import api from '../services/api'
+import api, { setUnauthorizedHandler } from '../services/api'
 import { connectSocket, disconnectSocket } from '../lib/socket'
 
 const AuthContext = createContext(null)
@@ -9,28 +9,35 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  function applySession(nextToken, nextUser) {
+    if (nextToken) localStorage.setItem('fh_token', nextToken)
+    setToken(nextToken)
+    if (nextUser) setUser(nextUser)
+  }
+
+  function clearSession() {
+    localStorage.removeItem('fh_token')
+    setToken(null)
+    setUser(null)
+    disconnectSocket()
+  }
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => clearSession())
+    return () => setUnauthorizedHandler(null)
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     async function load() {
-      if (!token) {
-        setUser(null)
-        setLoading(false)
-        disconnectSocket()
-        return
-      }
       try {
         const { data } = await api.get('/auth/me')
         if (!cancelled) {
           setUser(data.user)
-          connectSocket(token)
+          connectSocket(localStorage.getItem('fh_token'))
         }
       } catch {
-        localStorage.removeItem('fh_token')
-        if (!cancelled) {
-          setToken(null)
-          setUser(null)
-        }
-        disconnectSocket()
+        if (!cancelled) clearSession()
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -48,15 +55,16 @@ export function AuthProvider({ children }) {
       loading,
       setUser,
       login: (nextToken, nextUser) => {
-        localStorage.setItem('fh_token', nextToken)
-        setToken(nextToken)
-        setUser(nextUser)
+        applySession(nextToken, nextUser)
+        connectSocket(nextToken)
       },
-      logout: () => {
-        localStorage.removeItem('fh_token')
-        setToken(null)
-        setUser(null)
-        disconnectSocket()
+      logout: async () => {
+        try {
+          await api.post('/auth/logout')
+        } catch {
+          // already expired
+        }
+        clearSession()
       },
     }),
     [user, token, loading]
