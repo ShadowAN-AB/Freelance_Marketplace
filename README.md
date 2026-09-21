@@ -16,6 +16,20 @@ Payments, object storage, Redis presence, SMTP, and LLM matching are optional en
 
 Local `npm run dev` is one API process. `docker compose up` splits that process into **auth**, **marketplace**, **realtime**, and a **gateway** on port 5001.
 
+## Vercel
+
+Vercel can host the **React client**, not Express, MongoDB, or Socket.IO. Importing this repo with no Root Directory used to 404 because the app lives in `client/`, not the repo root.
+
+After this repo’s `vercel.json` is on `main`, the Vite app should build. Login and hire still need an API:
+
+1. Put MongoDB on Atlas (or any hosted Mongo).
+2. Run the Express app on Railway, Render, or Fly (`cd server && npm start`) with `CLIENT_URL=https://your-app.vercel.app` and `MONGO_URI=...`.
+3. In the Vercel project, set `VITE_API_URL` to that API origin (no trailing slash) and redeploy.
+
+Until `VITE_API_URL` is set, the Vercel site can render, but `/api` calls have nowhere to go.
+
+Do not point Vercel at `server/`. Serverless functions will not run this Socket.IO + disk-upload API.
+
 ## Local setup
 
 ```bash

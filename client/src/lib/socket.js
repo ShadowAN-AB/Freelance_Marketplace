@@ -7,7 +7,7 @@ export function connectSocket(token) {
     socket.disconnect()
     socket = null
   }
-  socket = io('/', {
+  socket = io(import.meta.env.VITE_API_URL || '/', {
     auth: token ? { token } : {},
     withCredentials: true,
     transports: ['websocket', 'polling'],
