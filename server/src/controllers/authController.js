@@ -49,4 +49,21 @@ const me = asyncHandler(async (req, res) => {
   res.json({ user: publicUser(req.user) });
 });
 
-module.exports = { register, login, me, registerSchema, loginSchema };
+const passwordSchema = z.object({
+  body: z.object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8).max(72),
+  }),
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) throw new ApiError(401, 'Account no longer exists');
+  const ok = await bcrypt.compare(req.body.currentPassword, user.password);
+  if (!ok) throw new ApiError(400, 'Current password is incorrect');
+  user.password = await bcrypt.hash(req.body.newPassword, 12);
+  await user.save();
+  res.json({ ok: true });
+});
+
+module.exports = { register, login, me, changePassword, registerSchema, loginSchema, passwordSchema };

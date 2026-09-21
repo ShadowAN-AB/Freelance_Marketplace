@@ -1,12 +1,15 @@
 import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
 import { Avatar, Spinner, StatusBadge } from '../../components/ui/Primitives'
 import { inr } from '../../lib/format'
+import { useAuth } from '../../context/AuthContext'
+import { ReportControl } from '../../components/ReportControl'
 import api from '../../services/api'
 
 export default function FreelancerProfilePage() {
   const { id } = useParams()
+  const { user: me } = useAuth()
   const { data, isLoading } = useQuery({
     queryKey: ['user', id],
     queryFn: async () => (await api.get(`/users/${id}`)).data,
@@ -22,13 +25,16 @@ export default function FreelancerProfilePage() {
   return (
     <PublicLayout>
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <div className="flex items-center gap-4">
-          <Avatar user={user} size="lg" />
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-muted">{fp.title || 'Freelancer'}</p>
-            <h1 className="font-display text-4xl">{user.name}</h1>
-            <p className="text-muted">{user.location}</p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar user={user} size="lg" />
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted">{fp.title || 'Freelancer'}</p>
+              <h1 className="font-display text-4xl">{user.name}</h1>
+              <p className="text-muted">{user.location}</p>
+            </div>
           </div>
+          {me?.role === 'client' ? <SaveTalentToggle freelancerId={id} /> : null}
         </div>
         <p className="mt-6 leading-relaxed">{user.bio}</p>
         <p className="mt-4 font-semibold">
@@ -37,7 +43,7 @@ export default function FreelancerProfilePage() {
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {(fp.skills || []).map((s) => (
-            <span key={s} className="rounded-full bg-paper-2 px-3 py-1 text-sm">{s}</span>
+            <span key={s} className="rounded-full bg-coral/15 px-3 py-1 text-sm font-bold text-coral">{s}</span>
           ))}
         </div>
         {fp.availability ? <div className="mt-4"><StatusBadge status={fp.availability} /></div> : null}
@@ -59,7 +65,35 @@ export default function FreelancerProfilePage() {
             </li>
           ))}
         </ul>
+        <div className="mt-10">
+          <ReportControl targetType="user" targetId={id} />
+        </div>
       </div>
     </PublicLayout>
+  )
+}
+
+function SaveTalentToggle({ freelancerId }) {
+  const qc = useQueryClient()
+  const { data } = useQuery({
+    queryKey: ['saved-me'],
+    queryFn: async () => (await api.get('/users/me/saved')).data,
+  })
+  const saved = (data?.talent || []).some((f) => f._id === freelancerId)
+  const toggle = useMutation({
+    mutationFn: () =>
+      saved
+        ? api.delete(`/users/me/saved-talent/${freelancerId}`)
+        : api.post(`/users/me/saved-talent/${freelancerId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-me'] }),
+  })
+  return (
+    <button
+      type="button"
+      onClick={() => toggle.mutate()}
+      className={`rounded-full border-2 px-3 py-1 text-sm font-bold ${saved ? 'border-coral bg-coral text-white' : 'border-ink/20 bg-white'}`}
+    >
+      {saved ? 'Saved' : 'Save'}
+    </button>
   )
 }

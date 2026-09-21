@@ -5,6 +5,7 @@ import { PublicLayout } from '../../layouts/Layouts'
 import { Button, ErrorText, Field, Spinner, StatusBadge, Textarea, Input } from '../../components/ui/Primitives'
 import { inr, formatDate, errorMessage } from '../../lib/format'
 import { useAuth } from '../../context/AuthContext'
+import { ReportControl } from '../../components/ReportControl'
 import api from '../../services/api'
 
 export default function ProjectDetailsPage() {
@@ -43,7 +44,10 @@ export default function ProjectDetailsPage() {
         <p className="text-xs uppercase tracking-[0.16em] text-muted">{project.category}</p>
         <div className="mt-2 flex items-start justify-between gap-4">
           <h1 className="font-display text-4xl">{project.title}</h1>
-          <StatusBadge status={project.status} />
+          <div className="flex items-center gap-2">
+            {user?.role === 'freelancer' ? <SaveProjectToggle projectId={id} /> : null}
+            <StatusBadge status={project.status} />
+          </div>
         </div>
         <p className="mt-3 text-muted">
           Posted by {project.clientId?.name} · due {formatDate(project.deadline)}
@@ -51,7 +55,7 @@ export default function ProjectDetailsPage() {
         <p className="mt-6 whitespace-pre-wrap leading-relaxed">{project.description}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {project.skills.map((s) => (
-            <span key={s} className="rounded-full bg-paper-2 px-3 py-1 text-sm">{s}</span>
+            <span key={s} className="rounded-full bg-teal/15 px-3 py-1 text-sm font-bold text-teal">{s}</span>
           ))}
         </div>
         <p className="mt-6 font-semibold">
@@ -64,7 +68,7 @@ export default function ProjectDetailsPage() {
         ) : null}
         {user?.role === 'freelancer' && project.status === 'open' ? (
           <form
-            className="mt-10 space-y-3 rounded-xl border border-line bg-white p-5"
+            className="mt-10 space-y-3 rounded-2xl border-2 border-ink/10 bg-white p-5"
             onSubmit={(e) => {
               e.preventDefault()
               propose.mutate()
@@ -91,7 +95,35 @@ export default function ProjectDetailsPage() {
             <Link className="text-teal" to="/login">Log in</Link> as a freelancer to propose.
           </p>
         ) : null}
+        <div className="mt-10">
+          <ReportControl targetType="project" targetId={id} />
+        </div>
       </div>
     </PublicLayout>
+  )
+}
+
+function SaveProjectToggle({ projectId }) {
+  const qc = useQueryClient()
+  const { data } = useQuery({
+    queryKey: ['saved-me'],
+    queryFn: async () => (await api.get('/users/me/saved')).data,
+  })
+  const saved = (data?.projects || []).some((p) => p._id === projectId)
+  const toggle = useMutation({
+    mutationFn: () =>
+      saved
+        ? api.delete(`/users/me/saved-projects/${projectId}`)
+        : api.post(`/users/me/saved-projects/${projectId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved-me'] }),
+  })
+  return (
+    <button
+      type="button"
+      onClick={() => toggle.mutate()}
+      className={`rounded-full border-2 px-3 py-1 text-sm font-bold ${saved ? 'border-coral bg-coral text-white' : 'border-ink/20 bg-white'}`}
+    >
+      {saved ? 'Saved' : 'Save'}
+    </button>
   )
 }
