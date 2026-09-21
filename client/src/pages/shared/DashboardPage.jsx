@@ -154,10 +154,14 @@ function FreelancerDash() {
         </section>
       ) : null}
       <h2 className="font-display mt-10 text-3xl">Recommended for your skills</h2>
+      <p className="mt-1 text-sm text-muted">
+        {rec.data?.engine === 'llm' ? 'LLM-written reasons on top of skill overlap.' : 'Skill overlap ranking. LLM_API_KEY adds model reasons.'}
+      </p>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {(rec.data?.data || []).slice(0, 4).map((row) => (
           <div key={row.project._id}>
-            <p className="mb-1 text-xs text-teal">{row.score}% match · missing {row.missing.join(', ') || 'none'}</p>
+            <p className="mb-1 text-xs text-teal">{row.score}% match · missing {row.missing?.join(', ') || 'none'}</p>
+            {row.rationale ? <p className="mb-2 text-sm text-muted">{row.rationale}</p> : null}
             <ProjectCard project={row.project} />
           </div>
         ))}

@@ -823,4 +823,41 @@ describe('FreelanceHub API', () => {
       process.env.NODE_ENV = prevEnv;
     }
   });
+
+  it('returns heuristic match rationales for the project owner', async () => {
+    const client = await register('client', 'match-client@test.dev');
+    const freelancer = await register('freelancer', 'match-free@test.dev');
+    await request(app)
+      .patch('/api/users/me')
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({ freelancerProfile: { title: 'Node engineer', skills: ['react', 'node.js'] } })
+      .expect(200);
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Need a React and Node ops dashboard',
+        description: 'Need a React dashboard with auth, charts, and a Node API.',
+        category: 'Web Development',
+        skills: ['react', 'node.js'],
+        budgetMin: 10000,
+        budgetMax: 20000,
+        deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+      })
+      .expect(201);
+    const outsider = await register('freelancer', 'match-out@test.dev');
+    await request(app)
+      .get(`/api/projects/${project.body.project._id}/matches`)
+      .set('Authorization', `Bearer ${outsider.body.token}`)
+      .expect(403);
+    const matched = await request(app)
+      .get(`/api/projects/${project.body.project._id}/matches`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(matched.body.engine, 'heuristic');
+    const row = matched.body.data.find((r) => r.freelancer._id === freelancer.body.user._id);
+    assert.ok(row);
+    assert.ok(row.score >= 80);
+    assert.match(row.rationale, /react/i);
+  });
 });

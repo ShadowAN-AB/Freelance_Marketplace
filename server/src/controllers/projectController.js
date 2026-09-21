@@ -7,6 +7,7 @@ const { ApiError } = require('../utils/apiError');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 const { normalizeSkills, matchScore } = require('../utils/skills');
 const { notify } = require('../services/notify');
+const { decorateFreelancers, decorateProjects } = require('../services/matching');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 
 const CATEGORIES = [
@@ -213,7 +214,8 @@ const projectMatches = asyncHandler(async (req, res) => {
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 20);
-  res.json({ data: ranked });
+  const matched = await decorateFreelancers(project, ranked);
+  res.json(matched);
 });
 
 const recommendedProjects = asyncHandler(async (req, res) => {
@@ -224,8 +226,10 @@ const recommendedProjects = asyncHandler(async (req, res) => {
       project,
       ...matchScore(project.skills, skills),
     }))
-    .sort((a, b) => b.score - a.score);
-  res.json({ data: ranked });
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20);
+  const matched = await decorateProjects(req.user, ranked);
+  res.json(matched);
 });
 
 const inviteSchema = z.object({

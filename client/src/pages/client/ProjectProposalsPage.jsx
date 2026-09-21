@@ -179,12 +179,22 @@ export default function ProjectProposalsPage() {
           </li>
         ))}
       </ul>
-      <h2 className="font-display mt-10 text-3xl">Skill matches</h2>
+      <h2 className="font-display mt-10 text-3xl">Suggested talent</h2>
+      <p className="mt-1 text-sm text-muted">
+        {matches.data?.engine === 'llm'
+          ? 'Ranked by skill overlap, then explained by the configured LLM.'
+          : 'Ranked by skill overlap. Set LLM_API_KEY to add model-written reasons.'}
+      </p>
       <ul className="mt-3 space-y-2">
         {(matches.data?.data || []).slice(0, 6).map((row) => (
-          <li key={row.freelancer._id} className="flex justify-between rounded-lg border border-line bg-white px-4 py-2">
-            <Link to={`/freelancers/${row.freelancer._id}`}>{row.freelancer.name}</Link>
-            <span className="text-teal">{row.score}%</span>
+          <li key={row.freelancer._id} className="rounded-lg border border-line bg-white px-4 py-3">
+            <div className="flex justify-between gap-3">
+              <Link to={`/freelancers/${row.freelancer._id}`} className="font-semibold">
+                {row.freelancer.name}
+              </Link>
+              <span className="text-teal">{row.score}%</span>
+            </div>
+            {row.rationale ? <p className="mt-1 text-sm text-muted">{row.rationale}</p> : null}
           </li>
         ))}
       </ul>
