@@ -53,6 +53,9 @@ export default function ProjectDetailsPage() {
   const isOwner = user && project.clientId?._id === user._id
   const myProposal = data?.myProposal
   const canBid = user?.role === 'freelancer' && project.status === 'open' && (!myProposal || myProposal.status === 'withdrawn')
+  const invited =
+    user?.role === 'freelancer' &&
+    (project.invitedFreelancerIds || []).some((fid) => String(fid._id || fid) === String(user._id))
 
   return (
     <PublicLayout>
@@ -76,6 +79,11 @@ export default function ProjectDetailsPage() {
           )}{' '}
           · {formatDue(project.deadline)}
         </p>
+        {invited ? (
+          <p className="mt-4 rounded-2xl border-2 border-teal/40 bg-teal/10 px-4 py-3 text-sm font-semibold text-teal">
+            You’re invited to bid on this brief.
+          </p>
+        ) : null}
         <p className="mt-6 whitespace-pre-wrap leading-relaxed">{project.description}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {project.skills.map((s) => (

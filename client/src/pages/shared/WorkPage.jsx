@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext'
 import api from '../../services/api'
 import { Button, EmptyState, Field, Input, Spinner, StatusBadge, Textarea } from '../../components/ui/Primitives'
 import { formatDate, formatRelative, inr, errorMessage, escrowProgress } from '../../lib/format'
+import { MessageButton } from '../../components/MessageButton'
 
 function activityItems(contract, payment) {
   const items = []
@@ -120,6 +121,7 @@ function ContractCard({ contract, onChange, focused }) {
   const [timeNote, setTimeNote] = useState('')
   const [timeDate, setTimeDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [milestoneFiles, setMilestoneFiles] = useState({})
+  const [sliceRevise, setSliceRevise] = useState('')
   const detail = useQuery({
     queryKey: ['contract', contract._id],
     queryFn: async () => (await api.get(`/contracts/${contract._id}`)).data,
@@ -211,9 +213,15 @@ function ContractCard({ contract, onChange, focused }) {
   }
 
   async function reviseSlice(mid) {
+    const note = revisionNote.trim()
+    if (!note) {
+      setError('Add a revision note')
+      return
+    }
     try {
-      await api.post(`/contracts/${contract._id}/milestones/${mid}/request-revision`, { note: revisionNote || 'Please revise this slice.' })
+      await api.post(`/contracts/${contract._id}/milestones/${mid}/request-revision`, { note })
       setRevisionNote('')
+      setSliceRevise('')
       toast.push('Revision requested')
       onChange()
     } catch (err) {
@@ -244,6 +252,15 @@ function ContractCard({ contract, onChange, focused }) {
         {live.clientId?.name} · {live.freelancerId?.name} · {inr(live.amount)}
         {hourly ? ` · ${inr(live.hourlyRate)}/hr cap` : ''}
       </p>
+      {live.status === 'active' ? (
+        <div className="mt-2">
+          <MessageButton
+            projectId={live.projectId}
+            userId={user.role === 'client' ? live.freelancerId : live.clientId}
+            label="Open chat"
+          />
+        </div>
+      ) : null}
       {payment ? <p className="mt-1 text-sm">Escrow: {escrowLabel(payment)}</p> : null}
       {progress.amount ? (
         <div className="mt-3">
@@ -290,9 +307,21 @@ function ContractCard({ contract, onChange, focused }) {
                 </div>
               ) : null}
               {user.role === 'client' && live.status === 'active' && m.status === 'submitted' ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button type="button" onClick={() => releaseSlice(m._id)}>Release this slice</Button>
-                  <Button variant="ghost" type="button" onClick={() => reviseSlice(m._id)}>Request revision</Button>
+                <div className="mt-2 space-y-2">
+                  {sliceRevise === String(m._id) ? (
+                    <>
+                      <Textarea rows={3} value={revisionNote} onChange={(e) => setRevisionNote(e.target.value)} placeholder="What should change?" />
+                      <div className="flex gap-2">
+                        <Button type="button" onClick={() => reviseSlice(m._id)}>Send revision</Button>
+                        <Button variant="ghost" type="button" onClick={() => setSliceRevise('')}>Cancel</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" onClick={() => releaseSlice(m._id)}>Release this slice</Button>
+                      <Button variant="ghost" type="button" onClick={() => setSliceRevise(String(m._id))}>Request revision</Button>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>

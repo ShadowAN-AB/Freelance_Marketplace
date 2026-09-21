@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
 import { inr, skillMatchPercent } from '../../lib/format'
+import { MessageButton } from '../../components/MessageButton'
 
 export default function ProjectProposalsPage() {
   const { id } = useParams()
@@ -117,8 +118,14 @@ export default function ProjectProposalsPage() {
                   <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                   <td className="px-3 py-2">
                     {p.status === 'pending' ? (
-                      <Button onClick={() => accept.mutate(p._id)}>Accept</Button>
-                    ) : null}
+                      <div className="flex flex-col items-start gap-1">
+                        <Button onClick={() => accept.mutate(p._id)}>Accept</Button>
+                        <Button variant="ghost" onClick={() => reject.mutate(p._id)}>Reject</Button>
+                        <MessageButton projectId={id} userId={p.freelancerId} />
+                      </div>
+                    ) : (
+                      <MessageButton projectId={id} userId={p.freelancerId} />
+                    )}
                   </td>
                 </tr>
               ))}
@@ -159,11 +166,16 @@ export default function ProjectProposalsPage() {
               ) : null}
             </p>
             {p.status === 'pending' ? (
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 <Button onClick={() => accept.mutate(p._id)}>Accept & hold escrow</Button>
                 <Button variant="ghost" onClick={() => reject.mutate(p._id)}>Reject</Button>
+                <MessageButton projectId={id} userId={p.freelancerId} />
               </div>
-            ) : null}
+            ) : (
+              <div className="mt-3">
+                <MessageButton projectId={id} userId={p.freelancerId} />
+              </div>
+            )}
           </li>
         ))}
       </ul>

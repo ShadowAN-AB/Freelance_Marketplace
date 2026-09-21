@@ -65,12 +65,12 @@ export default function MessagesPage() {
           )
         })}
       </aside>
-      {active ? <Thread id={active} /> : <div className="rounded-xl border border-dashed border-line p-10 text-muted">Select a conversation.</div>}
+      {active ? <Thread id={active} conversation={list.find((c) => c._id === active)} /> : <div className="rounded-xl border border-dashed border-line p-10 text-muted">Select a conversation.</div>}
     </div>
   )
 }
 
-function Thread({ id }) {
+function Thread({ id, conversation }) {
   const { user } = useAuth()
   const qc = useQueryClient()
   const [text, setText] = useState('')
@@ -157,8 +157,17 @@ function Thread({ id }) {
   }
 
   if (isLoading) return <Spinner />
+  const other = (conversation?.participants || []).find((p) => (p._id || p) !== user._id)
   return (
     <div className="flex flex-col rounded-2xl border-2 border-ink/10 bg-white">
+      <div className="border-b border-line px-4 py-3">
+        <p className="font-display text-xl">{other?.name || 'Conversation'}</p>
+        {conversation?.projectId?._id ? (
+          <Link to={`/projects/${conversation.projectId._id}`} className="text-sm font-semibold text-teal">
+            {conversation.projectId.title}
+          </Link>
+        ) : null}
+      </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-4" style={{ maxHeight: '60vh' }}>
         {(data?.data || []).map((m) => {
           const mine = (m.senderId?._id || m.senderId) === user._id

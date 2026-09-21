@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
 import { Avatar, Spinner, StatusBadge } from '../../components/ui/Primitives'
-import { inr } from '../../lib/format'
+import { inr, errorMessage } from '../../lib/format'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import { ReportControl } from '../../components/ReportControl'
 import api from '../../services/api'
 
@@ -88,6 +89,7 @@ export default function FreelancerProfilePage() {
 }
 
 function InviteToBid({ freelancerId }) {
+  const toast = useToast()
   const { data } = useQuery({
     queryKey: ['my-projects'],
     queryFn: async () => (await api.get('/projects', { params: { mine: 'true', limit: 50 } })).data,
@@ -96,6 +98,8 @@ function InviteToBid({ freelancerId }) {
   const [projectId, setProjectId] = useState('')
   const invite = useMutation({
     mutationFn: () => api.post(`/projects/${projectId}/invites`, { freelancerId }),
+    onSuccess: () => toast.push('Invite sent'),
+    onError: (err) => toast.push(errorMessage(err)),
   })
   if (!open.length) return null
   return (

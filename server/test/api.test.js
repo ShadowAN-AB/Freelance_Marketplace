@@ -645,4 +645,43 @@ describe('FreelanceHub API', () => {
     assert.equal(copy.body.project.status, 'open');
     assert.notEqual(copy.body.project._id, created.body.project._id);
   });
+
+  it('opens a conversation after a pending bid and forbids outsiders', async () => {
+    const client = await register('client', 'chat-client@test.dev');
+    const freelancer = await register('freelancer', 'chat-free@test.dev');
+    const outsider = await register('freelancer', 'chat-out@test.dev');
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Chat after a pending bid desk',
+        description: 'Need a React dashboard with auth, charts, and a Node API.',
+        category: 'Web Development',
+        skills: ['react'],
+        budgetMin: 10000,
+        budgetMax: 20000,
+        deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+      })
+      .expect(201);
+    await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'I have shipped similar ops dashboards and can start this week.',
+        bidAmount: 15000,
+        estimatedDays: 12,
+      })
+      .expect(201);
+    const opened = await request(app)
+      .post('/api/conversations')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ projectId: project.body.project._id, userId: freelancer.body.user._id })
+      .expect(201);
+    assert.ok(opened.body.conversation._id);
+    await request(app)
+      .post('/api/conversations')
+      .set('Authorization', `Bearer ${outsider.body.token}`)
+      .send({ projectId: project.body.project._id, userId: freelancer.body.user._id })
+      .expect(403);
+  });
 });

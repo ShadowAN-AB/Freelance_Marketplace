@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
-import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
+import { EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
 import { inr } from '../../lib/format'
+import { MessageButton } from '../../components/MessageButton'
 
 export default function MyProposalsPage() {
   const qc = useQueryClient()
@@ -28,9 +29,14 @@ export default function MyProposalsPage() {
               <StatusBadge status={p.status} />
             </div>
             <p className="mt-2 text-sm">{inr(p.bidAmount)} · {p.estimatedDays} days</p>
-            {p.status === 'pending' ? (
-              <button className="mt-2 text-sm text-danger" onClick={() => withdraw.mutate(p._id)}>Withdraw</button>
-            ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {p.status === 'pending' || p.status === 'accepted' ? (
+                <MessageButton projectId={p.projectId} userId={p.projectId?.clientId} label="Message client" />
+              ) : null}
+              {p.status === 'pending' ? (
+                <button className="text-sm text-danger" onClick={() => withdraw.mutate(p._id)}>Withdraw</button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
