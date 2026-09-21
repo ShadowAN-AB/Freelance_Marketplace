@@ -28,6 +28,13 @@ export function errorMessage(err, fallback = 'Something went wrong') {
   return err?.response?.data?.message || err?.message || fallback
 }
 
+export function pricingLabel(project) {
+  if (project?.pricingType === 'hourly') return 'Hourly'
+  const n = project?.milestones?.length || 0
+  if (n >= 2) return `Fixed · ${n} milestones`
+  return 'Fixed price'
+}
+
 export function skillMatchPercent(projectSkills = [], freelancerSkills = []) {
   const required = [...new Set(projectSkills.map((s) => String(s).toLowerCase().trim()).filter(Boolean))]
   const have = new Set(freelancerSkills.map((s) => String(s).toLowerCase().trim()))

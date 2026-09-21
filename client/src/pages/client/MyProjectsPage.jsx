@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import { EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
-import { inr } from '../../lib/format'
+import { inr, pricingLabel } from '../../lib/format'
 
 export default function MyProjectsPage() {
   const qc = useQueryClient()
@@ -28,7 +28,7 @@ export default function MyProjectsPage() {
           <li key={p._id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div>
               <Link to={`/projects/${p._id}`} className="font-display text-2xl">{p.title}</Link>
-              <p className="text-sm text-muted">{inr(p.budgetMin)} – {inr(p.budgetMax)}</p>
+              <p className="text-sm text-muted">{pricingLabel(p)} · {inr(p.budgetMin)} – {inr(p.budgetMax)}</p>
             </div>
             <div className="flex items-center gap-3">
               <StatusBadge status={p.status} />

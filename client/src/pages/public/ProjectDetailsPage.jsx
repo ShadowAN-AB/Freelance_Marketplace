@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
 import { Button, ErrorText, Field, Spinner, StatusBadge, Textarea, Input } from '../../components/ui/Primitives'
-import { inr, formatDate, errorMessage } from '../../lib/format'
+import { inr, formatDate, errorMessage, pricingLabel } from '../../lib/format'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { ReportControl } from '../../components/ReportControl'
@@ -85,8 +85,26 @@ export default function ProjectDetailsPage() {
           ))}
         </div>
         <p className="mt-6 font-semibold">
-          {inr(project.budgetMin)} – {inr(project.budgetMax)}
+          {pricingLabel(project)} · {inr(project.budgetMin)} – {inr(project.budgetMax)}
         </p>
+        {project.pricingType === 'hourly' ? (
+          <p className="mt-2 text-sm text-muted">Hourly work. Escrow holds the max budget as a cap until hours are approved.</p>
+        ) : null}
+        {project.pricingType !== 'hourly' && project.milestones?.length >= 2 ? (
+          <div className="mt-6 overflow-hidden rounded-2xl border-2 border-ink/10 bg-white">
+            <p className="border-b-2 border-ink/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-muted">
+              Planned milestones
+            </p>
+            <ul>
+              {project.milestones.map((m) => (
+                <li key={m._id || m.title} className="flex items-center justify-between border-b border-ink/5 px-4 py-3 last:border-0">
+                  <span className="font-semibold">{m.title}</span>
+                  <span className="font-bold text-teal">{inr(m.amount)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         {isOwner ? (
           <Link to={`/app/projects/${id}/proposals`} className="mt-6 inline-block font-semibold text-teal">
             Review proposals →

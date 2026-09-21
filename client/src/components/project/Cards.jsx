@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { inr, formatDate } from '../../lib/format'
+import { inr, formatDate, pricingLabel } from '../../lib/format'
 import { SkillChip, StatusBadge } from '../ui/Primitives'
 
 export function ProjectCard({ project }) {
@@ -12,6 +12,9 @@ export function ProjectCard({ project }) {
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-coral">{project.category}</p>
         <StatusBadge status={project.status} />
       </div>
+      <p className="mt-2 inline-flex rounded-full bg-teal/12 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-teal">
+        {pricingLabel(project)}
+      </p>
       <h3 className="font-display mt-2 text-2xl leading-tight">{project.title}</h3>
       <p className="mt-2 line-clamp-2 text-muted">{project.description}</p>
       <div className="mt-4 flex flex-wrap gap-2">
