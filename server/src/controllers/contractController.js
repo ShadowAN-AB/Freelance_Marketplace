@@ -47,7 +47,15 @@ const submitWork = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Only the hired freelancer can submit work');
   }
   if (contract.status !== 'active') throw new ApiError(400, 'Contract is not active');
+  if (Array.isArray(req.files)) {
+    contract.deliverables = req.files.map((file) => ({
+      originalName: file.originalname,
+      url: `/uploads/${file.filename}`,
+      uploadedAt: new Date(),
+    }));
+  }
   contract.workSubmittedAt = new Date();
+  contract.revisionNote = '';
   await contract.save();
   await notify({
     userId: contract.clientId,
@@ -81,6 +89,34 @@ const completeContract = asyncHandler(async (req, res) => {
     title: 'Payment released',
     body: `₹${contract.amount.toLocaleString('en-IN')} released for ${contract.projectId.title}`,
     link: `/app/earnings`,
+  });
+  res.json({ contract });
+});
+
+const revisionSchema = z.object({
+  body: z.object({
+    note: z.string().min(8).max(2000),
+  }),
+});
+
+const requestRevision = asyncHandler(async (req, res) => {
+  const contract = await Contract.findById(req.params.id).populate('projectId');
+  if (!contract) throw new ApiError(404, 'Contract not found');
+  if (contract.clientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'Only the client can request a revision');
+  }
+  if (contract.status !== 'active') throw new ApiError(400, 'Contract is not active');
+  if (!contract.workSubmittedAt) throw new ApiError(400, 'No submitted work to revise');
+  contract.revisionNote = req.body.note;
+  contract.revisionCount = (contract.revisionCount || 0) + 1;
+  contract.workSubmittedAt = null;
+  await contract.save();
+  await notify({
+    userId: contract.freelancerId,
+    type: 'revision_requested',
+    title: 'Revision requested',
+    body: `${req.user.name} asked for changes on ${contract.projectId.title}`,
+    link: `/app/work`,
   });
   res.json({ contract });
 });
@@ -155,8 +191,10 @@ module.exports = {
   getContract,
   submitWork,
   completeContract,
+  requestRevision,
   createReview,
   listUserReviews,
   myPayments,
   reviewSchema,
+  revisionSchema,
 };

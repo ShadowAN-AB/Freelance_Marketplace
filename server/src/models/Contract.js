@@ -11,6 +11,15 @@ const contractSchema = new mongoose.Schema(
     startDate: { type: Date, default: Date.now },
     workSubmittedAt: { type: Date },
     completedAt: { type: Date },
+    revisionNote: { type: String, default: '', maxlength: 2000 },
+    revisionCount: { type: Number, default: 0, min: 0 },
+    deliverables: [
+      {
+        originalName: { type: String, required: true, maxlength: 240 },
+        url: { type: String, required: true, maxlength: 400 },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
