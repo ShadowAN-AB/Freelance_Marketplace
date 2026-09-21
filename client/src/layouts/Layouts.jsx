@@ -73,6 +73,7 @@ const links = {
     ['Notifications', '/app/notifications'],
     ['Active work', '/app/work'],
     ['Saved', '/app/saved'],
+    ['Payments', '/app/earnings'],
     ['Profile', '/app/profile'],
     ['Settings', '/app/settings'],
   ],

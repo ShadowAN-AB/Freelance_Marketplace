@@ -83,7 +83,7 @@ export default function App() {
                 <Route path="/app/projects" element={<RoleRoute roles={['client']}><MyProjectsPage /></RoleRoute>} />
                 <Route path="/app/projects/:id/proposals" element={<RoleRoute roles={['client']}><ProjectProposalsPage /></RoleRoute>} />
                 <Route path="/app/proposals" element={<RoleRoute roles={['freelancer']}><MyProposalsPage /></RoleRoute>} />
-                <Route path="/app/earnings" element={<RoleRoute roles={['freelancer']}><EarningsPage /></RoleRoute>} />
+                <Route path="/app/earnings" element={<RoleRoute roles={['freelancer', 'client']}><EarningsPage /></RoleRoute>} />
                 <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminDashboardPage /></RoleRoute>} />
                 <Route path="/admin/users" element={<RoleRoute roles={['admin']}><AdminUsersPage /></RoleRoute>} />
                 <Route path="/admin/projects" element={<RoleRoute roles={['admin']}><AdminProjectsPage /></RoleRoute>} />

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api'
 import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
 import { inr } from '../../lib/format'
+import { useAuth } from '../../context/AuthContext'
 
 async function downloadLedger() {
   const res = await api.get('/payments/me.csv', { responseType: 'blob' })
@@ -14,15 +15,17 @@ async function downloadLedger() {
 }
 
 export default function EarningsPage() {
+  const { user } = useAuth()
   const { data, isLoading } = useQuery({
     queryKey: ['payments-me'],
     queryFn: async () => (await api.get('/payments/me')).data,
   })
   if (isLoading) return <Spinner />
+  const isClient = user?.role === 'client'
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-4xl">Earnings</h1>
+        <h1 className="font-display text-4xl">{isClient ? 'Payments' : 'Earnings'}</h1>
         <Button variant="ghost" type="button" onClick={downloadLedger}>
           Download CSV
         </Button>
@@ -37,7 +40,7 @@ export default function EarningsPage() {
           <p className="font-display mt-2 text-4xl">{inr(data?.totalHeld)}</p>
         </div>
       </div>
-      {!data?.data?.length ? <div className="mt-8"><EmptyState title="No ledger yet" body="Accepted work appears here as held, then released." /></div> : null}
+      {!data?.data?.length ? <div className="mt-8"><EmptyState title="No ledger yet" body={isClient ? 'Hired work appears here as held escrow, then released.' : 'Accepted work appears here as held, then released.'} /></div> : null}
       <ul className="mt-6 space-y-3">
         {(data?.data || []).map((p) => (
           <li key={p._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
