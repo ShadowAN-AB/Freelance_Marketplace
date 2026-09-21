@@ -2,9 +2,16 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
-import { inr } from '../../lib/format'
-import { Spinner } from '../../components/ui/Primitives'
-import { ProjectCard } from '../../components/project/Cards'
+import { formatDate, inr } from '../../lib/format'
+import { EmptyState, Spinner } from '../../components/ui/Primitives'
+import { ProjectCard, FreelancerCard } from '../../components/project/Cards'
+
+function dueSoon(date) {
+  if (!date) return false
+  const t = new Date(date).getTime()
+  const now = Date.now()
+  return t >= now && t <= now + 7 * 24 * 60 * 60 * 1000
+}
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -27,6 +34,86 @@ function Stat({ label, value, tone = 'teal' }) {
   )
 }
 
+function SavedSearchWidget() {
+  const { data } = useQuery({
+    queryKey: ['saved-searches'],
+    queryFn: async () => (await api.get('/users/me/saved-searches')).data,
+  })
+  const searches = data?.data || []
+  if (!searches.length) return null
+  return (
+    <section className="mt-10">
+      <h2 className="font-display text-3xl">Saved searches</h2>
+      <ul className="mt-3 space-y-2">
+        {searches.slice(0, 6).map((s) => {
+          const href =
+            s.kind === 'talent'
+              ? `/freelancers?${new URLSearchParams({
+                  q: s.q || '',
+                  minRate: s.minRate != null ? String(s.minRate) : '',
+                  maxRate: s.maxRate != null ? String(s.maxRate) : '',
+                })}`
+              : `/projects?${new URLSearchParams({
+                  q: s.q || '',
+                  category: s.category || '',
+                  dueSoon: s.dueSoon ? '1' : '',
+                })}`
+          return (
+            <li key={s._id}>
+              <Link to={href} className="font-semibold text-teal">
+                {s.name}
+              </Link>
+              <span className="ml-2 text-sm text-muted">{s.kind === 'talent' ? 'Talent' : 'Projects'}</span>
+            </li>
+          )
+        })}
+      </ul>
+      {searches.map((s) => (
+        <LiveSearchPreview key={s._id} search={s} />
+      ))}
+    </section>
+  )
+}
+
+function LiveSearchPreview({ search }) {
+  const talent = search.kind === 'talent'
+  const { data } = useQuery({
+    queryKey: ['saved-search-live', search._id],
+    queryFn: async () =>
+      talent
+        ? (
+            await api.get('/freelancers', {
+              params: {
+                q: search.q || undefined,
+                minRate: search.minRate || undefined,
+                maxRate: search.maxRate || undefined,
+                limit: 2,
+              },
+            })
+          ).data
+        : (
+            await api.get('/projects', {
+              params: {
+                q: search.q || undefined,
+                category: search.category || undefined,
+                dueSoon: search.dueSoon || undefined,
+                status: 'open',
+                limit: 2,
+              },
+            })
+          ).data,
+  })
+  const rows = data?.data || []
+  if (!rows.length) return null
+  return (
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      {rows.map((row) =>
+        talent ? <FreelancerCard key={row._id} user={row} /> : <ProjectCard key={row._id} project={row} />
+      )}
+    </div>
+  )
+}
+
 function FreelancerDash() {
   const proposals = useQuery({ queryKey: ['proposals-me'], queryFn: async () => (await api.get('/proposals/me')).data })
   const contracts = useQuery({ queryKey: ['contracts-me'], queryFn: async () => (await api.get('/contracts/me')).data })
@@ -35,7 +122,7 @@ function FreelancerDash() {
   if (proposals.isLoading) return <Spinner />
   const all = proposals.data?.data || []
   const active = (contracts.data?.data || []).filter((c) => c.status === 'active')
-  const done = (contracts.data?.data || []).filter((c) => c.status === 'completed')
+  const reminders = active.filter((c) => dueSoon(c.projectId?.deadline))
   return (
     <div>
       <h1 className="font-display text-4xl">Your desk</h1>
@@ -44,6 +131,28 @@ function FreelancerDash() {
         <Stat label="Active projects" value={active.length} tone="coral" />
         <Stat label="Earnings released" value={inr(payments.data?.totalReleased)} tone="gold" />
       </div>
+      {!all.length ? (
+        <div className="mt-8">
+          <EmptyState
+            title="No proposals yet"
+            body="Browse open briefs and send your first bid."
+            action={<Link to="/projects" className="font-bold text-teal">Browse projects</Link>}
+          />
+        </div>
+      ) : null}
+      {reminders.length ? (
+        <section className="mt-10">
+          <h2 className="font-display text-3xl">Due in 7 days</h2>
+          <ul className="mt-3 space-y-2">
+            {reminders.map((c) => (
+              <li key={c._id} className="rounded-2xl border-2 border-saffron/50 bg-white p-4">
+                <Link to="/app/work" className="font-display text-2xl">{c.projectId?.title}</Link>
+                <p className="text-sm text-muted">Deadline {formatDate(c.projectId?.deadline)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <h2 className="font-display mt-10 text-3xl">Recommended for your skills</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {(rec.data?.data || []).slice(0, 4).map((row) => (
@@ -53,6 +162,7 @@ function FreelancerDash() {
           </div>
         ))}
       </div>
+      <SavedSearchWidget />
       <p className="mt-6 text-sm">
         <Link className="text-teal" to="/app/proposals">See all proposals →</Link>
       </p>
@@ -68,6 +178,7 @@ function ClientDash() {
   const payments = useQuery({ queryKey: ['payments-me'], queryFn: async () => (await api.get('/payments/me')).data })
   if (projects.isLoading) return <Spinner />
   const list = projects.data?.data || []
+  const reminders = list.filter((p) => (p.status === 'open' || p.status === 'in_progress') && dueSoon(p.deadline))
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -81,11 +192,34 @@ function ClientDash() {
         <Stat label="Active" value={list.filter((p) => p.status === 'in_progress').length} tone="coral" />
         <Stat label="Spend released" value={inr(payments.data?.totalReleased)} tone="gold" />
       </div>
+      {!list.length ? (
+        <div className="mt-8">
+          <EmptyState
+            title="No projects yet"
+            body="Post a brief to start receiving proposals."
+            action={<Link to="/app/projects/new" className="font-bold text-teal">Post a project</Link>}
+          />
+        </div>
+      ) : null}
+      {reminders.length ? (
+        <section className="mt-10">
+          <h2 className="font-display text-3xl">Due in 7 days</h2>
+          <ul className="mt-3 space-y-2">
+            {reminders.map((p) => (
+              <li key={p._id} className="rounded-2xl border-2 border-saffron/50 bg-white p-4">
+                <Link to={`/projects/${p._id}`} className="font-display text-2xl">{p.title}</Link>
+                <p className="text-sm text-muted">Deadline {formatDate(p.deadline)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {list.slice(0, 4).map((p) => (
           <ProjectCard key={p._id} project={p} />
         ))}
       </div>
+      <SavedSearchWidget />
     </div>
   )
 }

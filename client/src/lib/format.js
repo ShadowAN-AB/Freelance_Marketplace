@@ -28,6 +28,14 @@ export function errorMessage(err, fallback = 'Something went wrong') {
   return err?.response?.data?.message || err?.message || fallback
 }
 
+export function skillMatchPercent(projectSkills = [], freelancerSkills = []) {
+  const required = [...new Set(projectSkills.map((s) => String(s).toLowerCase().trim()).filter(Boolean))]
+  const have = new Set(freelancerSkills.map((s) => String(s).toLowerCase().trim()))
+  if (!required.length) return 0
+  const matched = required.filter((s) => have.has(s)).length
+  return Math.round((100 * matched) / required.length)
+}
+
 export const CATEGORIES = [
   'Web Development',
   'Mobile',

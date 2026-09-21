@@ -11,6 +11,9 @@ const TYPES = [
   'report_update',
   'revision_requested',
   'contract_cancelled',
+  'project_invite',
+  'milestone_released',
+  'time_approved',
 ];
 
 const notificationSchema = new mongoose.Schema(

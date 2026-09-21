@@ -54,6 +54,7 @@ const links = {
     ['Active work', '/app/work'],
     ['Saved', '/app/saved'],
     ['Messages', '/app/messages'],
+    ['Notifications', '/app/notifications'],
     ['Earnings', '/app/earnings'],
     ['Profile', '/app/profile'],
     ['Settings', '/app/settings'],
@@ -63,6 +64,7 @@ const links = {
     ['Post project', '/app/projects/new'],
     ['My projects', '/app/projects'],
     ['Messages', '/app/messages'],
+    ['Notifications', '/app/notifications'],
     ['Active work', '/app/work'],
     ['Saved', '/app/saved'],
     ['Profile', '/app/profile'],
@@ -121,6 +123,9 @@ export function AppShell({ children }) {
                   {unread.data.unread}
                 </span>
               ) : null}
+              {href === '/app/notifications' && alerts.data?.unread ? (
+                <CountBadge count={alerts.data.unread} />
+              ) : null}
             </NavLink>
           ))}
           <button onClick={logout} className="block w-full rounded-full px-3 py-2 text-left text-sm font-bold text-white/50">
@@ -130,6 +135,12 @@ export function AppShell({ children }) {
       </aside>
       <div>
         <Topbar alertCount={alerts.data?.unread || 0} />
+        {!user.emailVerified ? (
+          <div className="mx-4 mt-4 rounded-2xl border-2 border-saffron bg-saffron/30 px-4 py-3 text-sm font-semibold md:mx-8">
+            Verify your email to post, propose, hire, and chat.{' '}
+            <Link to="/app/settings" className="text-teal">Resend from Settings</Link>
+          </div>
+        ) : null}
         <div className="p-4 md:p-8">{children}</div>
       </div>
     </div>
@@ -187,6 +198,9 @@ function Topbar({ alertCount = 0 }) {
             ))}
             {!data?.data?.length ? <p className="text-sm text-muted">No notifications yet.</p> : null}
           </div>
+          <Link to="/app/notifications" className="mt-2 block text-center text-sm font-bold text-teal">
+            See all
+          </Link>
         </div>
       </details>
     </div>

@@ -35,6 +35,7 @@ export default function MyProjectsPage() {
               {p.status === 'open' ? (
                 <>
                   <Link to={`/app/projects/${p._id}/proposals`} className="text-sm font-semibold text-teal">Proposals</Link>
+                  <Link to={`/app/projects/${p._id}/edit`} className="text-sm font-semibold">Edit</Link>
                   <button className="text-sm text-danger" onClick={() => cancel.mutate(p._id)}>Cancel</button>
                 </>
               ) : null}

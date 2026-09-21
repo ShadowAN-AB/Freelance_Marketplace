@@ -19,6 +19,8 @@ import SettingsPage from './pages/shared/SettingsPage'
 import SavedPage from './pages/shared/SavedPage'
 import MessagesPage from './pages/shared/MessagesPage'
 import WorkPage from './pages/shared/WorkPage'
+import NotificationsPage from './pages/shared/NotificationsPage'
+import InvoicePage from './pages/shared/InvoicePage'
 import PostProjectPage from './pages/client/PostProjectPage'
 import MyProjectsPage from './pages/client/MyProjectsPage'
 import ProjectProposalsPage from './pages/client/ProjectProposalsPage'
@@ -72,8 +74,11 @@ export default function App() {
                 <Route path="/app/saved" element={<SavedPage />} />
                 <Route path="/app/messages" element={<MessagesPage />} />
                 <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
+                <Route path="/app/notifications" element={<NotificationsPage />} />
+                <Route path="/app/work/:id/invoice" element={<InvoicePage />} />
                 <Route path="/app/work" element={<WorkPage />} />
                 <Route path="/app/projects/new" element={<RoleRoute roles={['client']}><PostProjectPage /></RoleRoute>} />
+                <Route path="/app/projects/:id/edit" element={<RoleRoute roles={['client']}><PostProjectPage /></RoleRoute>} />
                 <Route path="/app/projects" element={<RoleRoute roles={['client']}><MyProjectsPage /></RoleRoute>} />
                 <Route path="/app/projects/:id/proposals" element={<RoleRoute roles={['client']}><ProjectProposalsPage /></RoleRoute>} />
                 <Route path="/app/proposals" element={<RoleRoute roles={['freelancer']}><MyProposalsPage /></RoleRoute>} />

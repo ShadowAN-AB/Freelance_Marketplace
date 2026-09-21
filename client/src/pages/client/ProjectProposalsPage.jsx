@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
-import { inr } from '../../lib/format'
+import { inr, skillMatchPercent } from '../../lib/format'
 
 export default function ProjectProposalsPage() {
   const { id } = useParams()
@@ -10,6 +10,10 @@ export default function ProjectProposalsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['project-proposals', id],
     queryFn: async () => (await api.get(`/projects/${id}/proposals`)).data,
+  })
+  const project = useQuery({
+    queryKey: ['project', id],
+    queryFn: async () => (await api.get(`/projects/${id}`)).data,
   })
   const matches = useQuery({
     queryKey: ['matches', id],
@@ -29,11 +33,66 @@ export default function ProjectProposalsPage() {
   })
   if (isLoading) return <Spinner />
   const list = [...(data?.data || [])].sort((a, b) => Number(!!b.shortlisted) - Number(!!a.shortlisted))
+  const skills = project.data?.project?.skills || []
   return (
     <div>
       <h1 className="font-display text-4xl">Proposals</h1>
-      <p className="mt-2 text-sm text-muted">Shortlisted proposals appear first.</p>
-      {!list.length ? <div className="mt-8"><EmptyState title="No proposals yet" body="Share the project or wait for talent to bid." /></div> : null}
+      <p className="mt-2 text-sm text-muted">Compare bids, then read cover letters below.</p>
+      {list.length ? (
+        <div className="mt-6 overflow-x-auto rounded-2xl border-2 border-ink/10 bg-white">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="border-b border-line bg-paper text-xs uppercase tracking-wide text-muted">
+              <tr>
+                <th className="px-3 py-2">Name</th>
+                <th className="px-3 py-2">Bid</th>
+                <th className="px-3 py-2">Days</th>
+                <th className="px-3 py-2">Rating</th>
+                <th className="px-3 py-2">Match</th>
+                <th className="px-3 py-2">Shortlist</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2"> </th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.map((p) => (
+                <tr key={p._id} className="border-b border-line/70">
+                  <td className="px-3 py-2 font-semibold">
+                    <Link to={`/freelancers/${p.freelancerId?._id}`}>{p.freelancerId?.name}</Link>
+                  </td>
+                  <td className="px-3 py-2">{inr(p.bidAmount)}</td>
+                  <td className="px-3 py-2">{p.estimatedDays}</td>
+                  <td className="px-3 py-2">{p.freelancerId?.avgRating ? `${p.freelancerId.avgRating}★` : '—'}</td>
+                  <td className="px-3 py-2">{skillMatchPercent(skills, p.freelancerId?.freelancerProfile?.skills)}%</td>
+                  <td className="px-3 py-2">
+                    {p.status === 'pending' ? (
+                      <button
+                        type="button"
+                        aria-label={p.shortlisted ? 'Remove from shortlist' : 'Shortlist proposal'}
+                        onClick={() => shortlist.mutate(p._id)}
+                        className={`text-xl ${p.shortlisted ? 'text-saffron' : 'text-ink/20'}`}
+                      >
+                        ★
+                      </button>
+                    ) : p.shortlisted ? (
+                      <span className="text-xl text-saffron">★</span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
+                  <td className="px-3 py-2">
+                    {p.status === 'pending' ? (
+                      <Button onClick={() => accept.mutate(p._id)}>Accept</Button>
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="mt-8"><EmptyState title="No proposals yet" body="Share the project or wait for talent to bid." /></div>
+      )}
       <ul className="mt-6 space-y-4">
         {list.map((p) => (
           <li key={p._id} className="rounded-2xl border-2 border-ink/10 bg-white p-5">
