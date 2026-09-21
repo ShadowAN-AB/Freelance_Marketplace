@@ -8,6 +8,9 @@ const paymentSchema = new mongoose.Schema(
     amount: { type: Number, required: true, min: 0 },
     status: { type: String, enum: ['held', 'released', 'refunded'], default: 'held', index: true },
     releasedAt: { type: Date },
+    refundedAt: { type: Date },
+    provider: { type: String, enum: ['simulated', 'stripe'], default: 'simulated' },
+    providerRef: { type: String, default: '' },
   },
   { timestamps: true }
 );

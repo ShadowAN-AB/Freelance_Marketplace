@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.get('/recommended', protect, authorize('freelancer'), recommendedProjects);
 router.get('/', optionalAuth, listProjects);
-router.get('/:id', getProject);
+router.get('/:id', optionalAuth, getProject);
 router.post('/', protect, authorize('client'), validate(createSchema), createProject);
 router.patch('/:id', protect, authorize('client'), validate(updateSchema), updateProject);
 router.post('/:id/cancel', protect, authorize('client'), cancelProject);

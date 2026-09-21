@@ -14,6 +14,10 @@ export default function AdminUsersPage() {
     mutationFn: ({ id, blocked }) => api.patch(`/admin/users/${id}/block`, { blocked }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
   })
+  const verify = useMutation({
+    mutationFn: ({ id, skills }) => api.patch(`/admin/users/${id}/verify-skills`, { skills }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
   if (isLoading) return <Spinner />
   return (
     <div>
@@ -33,6 +37,21 @@ export default function AdminUsersPage() {
               {u.role !== 'admin' ? (
                 <button className="text-sm text-teal" onClick={() => block.mutate({ id: u._id, blocked: !u.isBlocked })}>
                   {u.isBlocked ? 'Unblock' : 'Block'}
+                </button>
+              ) : null}
+              {u.role === 'freelancer' ? (
+                <button
+                  className="text-sm"
+                  onClick={() => {
+                    const skills = window.prompt('Verified skills (comma separated)', (u.freelancerProfile?.verifiedSkills || []).join(', '))
+                    if (skills == null) return
+                    verify.mutate({
+                      id: u._id,
+                      skills: skills.split(',').map((s) => s.trim()).filter(Boolean),
+                    })
+                  }}
+                >
+                  Verify skills
                 </button>
               ) : null}
             </div>

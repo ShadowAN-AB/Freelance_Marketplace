@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 import api from '../../services/api'
 import { Button, EmptyState, Field, Spinner, StatusBadge, Textarea } from '../../components/ui/Primitives'
 import { inr, errorMessage } from '../../lib/format'
@@ -10,7 +11,7 @@ export default function WorkPage() {
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['contracts-me'],
-    queryFn: async () => (await api.get('/contracts/me')).data,
+    queryFn: async () => (await api.get('/contracts/me', { params: { limit: 50 } })).data,
   })
   if (isLoading) return <Spinner />
   const list = data?.data || []
@@ -36,12 +37,15 @@ export default function WorkPage() {
 
 function ContractCard({ contract, onChange }) {
   const { user } = useAuth()
+  const toast = useToast()
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [files, setFiles] = useState([])
   const [revisionNote, setRevisionNote] = useState('')
   const [showRevision, setShowRevision] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [showCancel, setShowCancel] = useState(false)
   const detail = useQuery({
     queryKey: ['contract', contract._id],
     queryFn: async () => (await api.get(`/contracts/${contract._id}`)).data,
@@ -55,13 +59,17 @@ function ContractCard({ contract, onChange }) {
     },
     onSuccess: () => {
       setFiles([])
+      toast.push('Work submitted')
       onChange()
     },
     onError: (err) => setError(errorMessage(err)),
   })
   const complete = useMutation({
     mutationFn: () => api.post(`/contracts/${contract._id}/complete`),
-    onSuccess: onChange,
+    onSuccess: () => {
+      toast.push('Payment released')
+      onChange()
+    },
     onError: (err) => setError(errorMessage(err)),
   })
   const revise = useMutation({
@@ -69,6 +77,16 @@ function ContractCard({ contract, onChange }) {
     onSuccess: () => {
       setShowRevision(false)
       setRevisionNote('')
+      toast.push('Revision requested')
+      onChange()
+    },
+    onError: (err) => setError(errorMessage(err)),
+  })
+  const cancel = useMutation({
+    mutationFn: () => api.post(`/contracts/${contract._id}/cancel`, { reason: cancelReason }),
+    onSuccess: () => {
+      setShowCancel(false)
+      toast.push('Contract cancelled and escrow refunded')
       onChange()
     },
     onError: (err) => setError(errorMessage(err)),
@@ -113,6 +131,12 @@ function ContractCard({ contract, onChange }) {
           </ul>
         </div>
       ) : null}
+      {live.status === 'cancelled' && live.disputeReason ? (
+        <p className="mt-3 rounded-xl bg-coral/10 p-3 text-sm">
+          <strong>Cancelled: </strong>
+          {live.disputeReason}
+        </p>
+      ) : null}
       {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
       {user.role === 'freelancer' && live.status === 'active' && !submitted ? (
         <form
@@ -139,6 +163,25 @@ function ContractCard({ contract, onChange }) {
           <Button onClick={() => complete.mutate()} disabled={complete.isPending}>Approve & release payment</Button>
           <Button variant="ghost" onClick={() => setShowRevision((v) => !v)}>Request revision</Button>
         </div>
+      ) : null}
+      {live.status === 'active' ? (
+        <div className="mt-3">
+          <Button variant="ghost" onClick={() => setShowCancel((v) => !v)}>Cancel & refund escrow</Button>
+        </div>
+      ) : null}
+      {showCancel ? (
+        <form
+          className="mt-3 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            cancel.mutate()
+          }}
+        >
+          <Field label="Why are you cancelling?">
+            <Textarea rows={3} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} required minLength={8} />
+          </Field>
+          <Button variant="danger" disabled={cancel.isPending}>Confirm cancel</Button>
+        </form>
       ) : null}
       {showRevision && user.role === 'client' ? (
         <form

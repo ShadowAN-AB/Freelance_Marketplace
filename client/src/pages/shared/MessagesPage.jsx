@@ -12,7 +12,7 @@ export default function MessagesPage() {
   const [onlineIds, setOnlineIds] = useState(() => new Set())
   const { data, isLoading } = useQuery({
     queryKey: ['conversations'],
-    queryFn: async () => (await api.get('/conversations')).data,
+    queryFn: async () => (await api.get('/conversations', { params: { limit: 50 } })).data,
   })
 
   useEffect(() => {
@@ -37,7 +37,11 @@ export default function MessagesPage() {
     <div className="grid min-h-[70vh] gap-4 md:grid-cols-[280px_1fr]">
       <aside className="rounded-2xl border-2 border-ink/10 bg-white">
         <h1 className="font-display border-b border-line px-4 py-3 text-2xl">Messages</h1>
-        {!list.length ? <div className="p-4"><EmptyState title="No threads" body="Chat opens after a proposal exists." /></div> : null}
+        {!list.length ? (
+          <div className="p-4">
+            <EmptyState title="No threads" body="Chat opens after a proposal exists." />
+          </div>
+        ) : null}
         {list.map((c) => {
           const other = (c.participants || []).find((p) => (p._id || p) !== user._id)
           const online = other && onlineIds.has(String(other._id || other))
@@ -48,7 +52,7 @@ export default function MessagesPage() {
               className={`block border-b border-line px-4 py-3 ${c._id === active ? 'bg-paper' : ''}`}
             >
               <p className="flex items-center gap-2 font-semibold">
-                <span className={`inline-block h-2.5 w-2.5 rounded-full ${online ? 'bg-teal' : 'bg-ink/20'}`} />
+                <span className={`inline-block h-2.5 w-2.5 rounded-full ${online ? 'bg-teal' : 'bg-ink/20'}`} aria-label={online ? 'Online' : 'Offline'} />
                 {other?.name || c.projectId?.title}
               </p>
               <p className="line-clamp-1 text-sm text-muted">{c.lastMessagePreview || 'No messages yet'}</p>
@@ -65,6 +69,8 @@ function Thread({ id }) {
   const { user } = useAuth()
   const qc = useQueryClient()
   const [text, setText] = useState('')
+  const [typingLabel, setTypingLabel] = useState('')
+  const typingTimer = useRef(null)
   const bottom = useRef(null)
   const { data, isLoading } = useQuery({
     queryKey: ['messages', id],
@@ -90,13 +96,31 @@ function Thread({ id }) {
         api.post(`/conversations/${id}/read`).then(() => qc.invalidateQueries({ queryKey: ['unread-count'] }))
       }
     }
+    const onTyping = (payload) => {
+      if (payload.conversationId !== id || payload.userId === user._id) return
+      setTypingLabel(payload.typing ? `${payload.name} is typing…` : '')
+    }
     socket.on('message:new', onNew)
-    return () => socket.off('message:new', onNew)
-  }, [id, qc])
+    socket.on('typing', onTyping)
+    return () => {
+      socket.off('message:new', onNew)
+      socket.off('typing', onTyping)
+    }
+  }, [id, qc, user._id])
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' })
   }, [data])
+
+  function emitTyping(next) {
+    const socket = getSocket()
+    if (!socket) return
+    socket.emit('typing', { conversationId: id, typing: next })
+    clearTimeout(typingTimer.current)
+    if (next) {
+      typingTimer.current = setTimeout(() => socket.emit('typing', { conversationId: id, typing: false }), 1200)
+    }
+  }
 
   async function send(e) {
     e.preventDefault()
@@ -104,6 +128,7 @@ function Thread({ id }) {
     if (!value) return
     const socket = getSocket()
     setText('')
+    emitTyping(false)
     if (socket) {
       socket.emit('message:send', { conversationId: id, text: value })
     } else {
@@ -127,8 +152,18 @@ function Thread({ id }) {
         })}
         <div ref={bottom} />
       </div>
+      <p className="min-h-6 px-4 text-xs text-muted" aria-live="polite">
+        {typingLabel}
+      </p>
       <form onSubmit={send} className="flex gap-2 border-t border-line p-3">
-        <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="Write a message" />
+        <Input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value)
+            emitTyping(true)
+          }}
+          placeholder="Write a message"
+        />
         <button className="rounded-full bg-coral px-4 py-2 font-bold text-white">Send</button>
       </form>
     </div>

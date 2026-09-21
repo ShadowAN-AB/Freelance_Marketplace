@@ -73,6 +73,8 @@ const links = {
     ['Users', '/admin/users'],
     ['Projects', '/admin/projects'],
     ['Reports', '/admin/reports'],
+    ['Contracts', '/admin/contracts'],
+    ['Audit', '/admin/audit'],
   ],
 }
 
@@ -111,7 +113,11 @@ export function AppShell({ children }) {
             >
               {label}
               {href === '/app/messages' && unread.data?.unread ? (
-                <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white">
+                <span
+                  className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white"
+                  aria-live="polite"
+                  aria-label={`${unread.data.unread} unread conversations`}
+                >
                   {unread.data.unread}
                 </span>
               ) : null}
@@ -133,7 +139,11 @@ export function AppShell({ children }) {
 function CountBadge({ count }) {
   if (!count) return null
   return (
-    <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white">
+    <span
+      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white"
+      aria-live="polite"
+      aria-label={`${count} unread alerts`}
+    >
       {count}
     </span>
   )
@@ -157,7 +167,7 @@ function Topbar({ alertCount = 0 }) {
         Signed in as <span className="text-coral">{user.name}</span>
       </p>
       <details className="relative">
-        <summary className="flex cursor-pointer list-none items-center rounded-full bg-saffron px-4 py-1.5 text-sm font-bold">
+        <summary className="flex cursor-pointer list-none items-center rounded-full bg-saffron px-4 py-1.5 text-sm font-bold outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-coral">
           Alerts
           <CountBadge count={alertCount || data?.unread || 0} />
         </summary>

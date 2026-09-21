@@ -15,6 +15,9 @@ export default function ProfilePage() {
     hourlyRate: user.freelancerProfile?.hourlyRate || '',
     availability: user.freelancerProfile?.availability || 'available',
     companyName: user.clientProfile?.companyName || '',
+    portfolio: (user.freelancerProfile?.portfolio || [])
+      .map((item) => [item.title, item.url, item.imageUrl].filter(Boolean).join(' | '))
+      .join('\n'),
   })
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
@@ -31,6 +34,14 @@ export default function ProfilePage() {
           skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
           hourlyRate: Number(form.hourlyRate) || 0,
           availability: form.availability,
+          portfolio: form.portfolio
+            .split('\n')
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              const [title, url = '', imageUrl = ''] = line.split('|').map((p) => p.trim())
+              return { title, url, imageUrl }
+            }),
         }
       }
       if (user.role === 'client') payload.clientProfile = { companyName: form.companyName }
@@ -92,6 +103,12 @@ export default function ProfilePage() {
                 <option value="unavailable">unavailable</option>
               </select>
             </Field>
+            <Field label="Portfolio (one per line: title | url | image url)">
+              <Textarea rows={4} value={form.portfolio} onChange={(e) => setForm({ ...form, portfolio: e.target.value })} />
+            </Field>
+            {(user.freelancerProfile?.verifiedSkills || []).length ? (
+              <p className="text-sm font-semibold text-teal">Verified: {user.freelancerProfile.verifiedSkills.join(', ')}</p>
+            ) : null}
           </>
         ) : null}
         <Button>Save profile</Button>

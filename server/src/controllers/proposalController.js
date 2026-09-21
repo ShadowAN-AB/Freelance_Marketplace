@@ -7,7 +7,9 @@ const Conversation = require('../models/Conversation');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { notify } = require('../services/notify');
+const { sendMail } = require('../services/mailer');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const { stripeEnabled } = require('../services/payments');
 
 const createSchema = z.object({
   body: z.object({
@@ -24,13 +26,27 @@ const createProposal = asyncHandler(async (req, res) => {
   if (project.clientId.toString() === req.user._id.toString()) {
     throw new ApiError(400, 'You cannot propose on your own project');
   }
-  const proposal = await Proposal.create({
-    projectId: project._id,
-    freelancerId: req.user._id,
-    coverLetter: req.body.coverLetter,
-    bidAmount: req.body.bidAmount,
-    estimatedDays: req.body.estimatedDays,
-  });
+  const existing = await Proposal.findOne({ projectId: project._id, freelancerId: req.user._id });
+  let proposal;
+  if (existing) {
+    if (existing.status !== 'withdrawn') {
+      throw new ApiError(409, 'You already proposed on this project');
+    }
+    existing.coverLetter = req.body.coverLetter;
+    existing.bidAmount = req.body.bidAmount;
+    existing.estimatedDays = req.body.estimatedDays;
+    existing.status = 'pending';
+    existing.shortlisted = false;
+    proposal = await existing.save();
+  } else {
+    proposal = await Proposal.create({
+      projectId: project._id,
+      freelancerId: req.user._id,
+      coverLetter: req.body.coverLetter,
+      bidAmount: req.body.bidAmount,
+      estimatedDays: req.body.estimatedDays,
+    });
+  }
   await notify({
     userId: project.clientId,
     type: 'proposal_received',
@@ -38,6 +54,14 @@ const createProposal = asyncHandler(async (req, res) => {
     body: `${req.user.name} proposed ₹${req.body.bidAmount.toLocaleString('en-IN')} on ${project.title}`,
     link: `/app/projects/${project._id}/proposals`,
   });
+  const client = await require('../models/User').findById(project.clientId).select('email name');
+  if (client?.email) {
+    await sendMail({
+      to: client.email,
+      subject: `New proposal on ${project.title}`,
+      text: `${req.user.name} proposed ₹${req.body.bidAmount.toLocaleString('en-IN')}.`,
+    });
+  }
   res.status(201).json({ proposal });
 });
 
@@ -91,6 +115,7 @@ const acceptProposal = asyncHandler(async (req, res) => {
     freelancerId: proposal.freelancerId,
     amount: proposal.bidAmount,
     status: 'held',
+    provider: stripeEnabled() ? 'stripe' : 'simulated',
   });
 
   project.status = 'in_progress';
@@ -121,6 +146,14 @@ const acceptProposal = asyncHandler(async (req, res) => {
     body: `You were hired for ${project.title}`,
     link: `/app/work`,
   });
+  const hired = await require('../models/User').findById(proposal.freelancerId).select('email');
+  if (hired?.email) {
+    await sendMail({
+      to: hired.email,
+      subject: `You were hired for ${project.title}`,
+      text: `A contract is now active. Escrow of ₹${proposal.bidAmount.toLocaleString('en-IN')} is held.`,
+    });
+  }
   await Promise.all(
     rejected.map((p) =>
       notify({

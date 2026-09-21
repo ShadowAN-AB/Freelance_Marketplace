@@ -43,7 +43,10 @@ export default function FreelancerProfilePage() {
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {(fp.skills || []).map((s) => (
-            <span key={s} className="rounded-full bg-coral/15 px-3 py-1 text-sm font-bold text-coral">{s}</span>
+            <span key={s} className="rounded-full bg-coral/15 px-3 py-1 text-sm font-bold text-coral">
+              {s}
+              {(fp.verifiedSkills || []).includes(s) ? ' ✓' : ''}
+            </span>
           ))}
         </div>
         {fp.availability ? <div className="mt-4"><StatusBadge status={fp.availability} /></div> : null}
@@ -51,7 +54,12 @@ export default function FreelancerProfilePage() {
         <ul className="mt-3 space-y-2">
           {(fp.portfolio || []).map((item) => (
             <li key={item._id || item.title} className="rounded-lg border border-line bg-white p-3">
-              <a href={item.url || '#'} className="font-semibold">{item.title}</a>
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt="" className="mb-2 h-32 w-full rounded-md object-cover" />
+              ) : null}
+              <a href={item.url || '#'} className="font-semibold">
+                {item.title}
+              </a>
             </li>
           ))}
           {!fp.portfolio?.length ? <p className="text-muted">No portfolio items yet.</p> : null}

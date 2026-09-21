@@ -6,6 +6,7 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { notify } = require('../services/notify');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const { isOnline } = require('../services/socket');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 
 const openSchema = z.object({
@@ -21,11 +22,18 @@ function assertParticipant(conversation, userId) {
 }
 
 const listConversations = asyncHandler(async (req, res) => {
-  const conversations = await Conversation.find({ participants: req.user._id })
-    .populate({ path: 'participants', select: USER_PUBLIC_FIELDS })
-    .populate({ path: 'projectId', select: 'title status' })
-    .sort({ lastMessageAt: -1 });
-  res.json({ data: conversations });
+  const { page, limit, skip } = paginateQuery(req.query);
+  const filter = { participants: req.user._id };
+  const [data, total] = await Promise.all([
+    Conversation.find(filter)
+      .populate({ path: 'participants', select: USER_PUBLIC_FIELDS })
+      .populate({ path: 'projectId', select: 'title status' })
+      .sort({ lastMessageAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Conversation.countDocuments(filter),
+  ]);
+  res.json(paginateResult({ data, total, page, limit }));
 });
 
 const openConversation = asyncHandler(async (req, res) => {
@@ -100,13 +108,15 @@ const sendMessageHttp = asyncHandler(async (req, res) => {
   conversation.lastMessagePreview = text.slice(0, 200);
   await conversation.save();
   const other = conversation.participants.find((id) => id.toString() !== req.user._id.toString());
-  await notify({
-    userId: other,
-    type: 'message',
-    title: `Message from ${req.user.name}`,
-    body: text.slice(0, 120),
-    link: `/app/messages/${conversation._id}`,
-  });
+  if (other && !isOnline(other)) {
+    await notify({
+      userId: other,
+      type: 'message',
+      title: `Message from ${req.user.name}`,
+      body: text.slice(0, 120),
+      link: `/app/messages/${conversation._id}`,
+    });
+  }
   const populated = await message.populate({ path: 'senderId', select: USER_PUBLIC_FIELDS });
   const io = req.app.get('io');
   if (io) io.to(`conversation:${conversation._id}`).emit('message:new', populated);

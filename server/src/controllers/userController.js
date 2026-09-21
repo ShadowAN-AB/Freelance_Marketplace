@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Project = require('../models/Project');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
+const { persistUpload } = require('../services/storage');
 const { publicUser, USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 const { normalizeSkills } = require('../utils/skills');
@@ -71,7 +72,8 @@ const updateMe = asyncHandler(async (req, res) => {
 
 const uploadAvatar = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, 'Avatar image is required');
-  req.user.avatarUrl = `/uploads/${req.file.filename}`;
+  const stored = await persistUpload(req.file);
+  req.user.avatarUrl = stored.url;
   await req.user.save();
   res.json({ user: publicUser(req.user) });
 });
@@ -88,6 +90,18 @@ const listFreelancers = asyncHandler(async (req, res) => {
   }
   if (req.query.skill) {
     filter['freelancerProfile.skills'] = new RegExp(req.query.skill, 'i');
+  }
+  if (req.query.minRate) {
+    filter['freelancerProfile.hourlyRate'] = {
+      ...(filter['freelancerProfile.hourlyRate'] || {}),
+      $gte: Number(req.query.minRate),
+    };
+  }
+  if (req.query.maxRate) {
+    filter['freelancerProfile.hourlyRate'] = {
+      ...(filter['freelancerProfile.hourlyRate'] || {}),
+      $lte: Number(req.query.maxRate),
+    };
   }
   const [data, total] = await Promise.all([
     User.find(filter).select(USER_PUBLIC_FIELDS).sort({ avgRating: -1, createdAt: -1 }).skip(skip).limit(limit),

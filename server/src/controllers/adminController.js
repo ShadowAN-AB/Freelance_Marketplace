@@ -5,6 +5,8 @@ const Proposal = require('../models/Proposal');
 const Contract = require('../models/Contract');
 const Payment = require('../models/Payment');
 const Report = require('../models/Report');
+const AuditLog = require('../models/AuditLog');
+const { audit } = require('../services/audit');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { notify } = require('../services/notify');
@@ -51,6 +53,12 @@ const blockUser = asyncHandler(async (req, res) => {
   if (user.role === 'admin') throw new ApiError(400, 'Cannot block an admin');
   user.isBlocked = req.body.blocked !== false;
   await user.save();
+  await audit({
+    actorId: req.user._id,
+    action: user.isBlocked ? 'user_block' : 'user_unblock',
+    targetType: 'user',
+    targetId: user._id,
+  });
   res.json({ user });
 });
 
@@ -69,6 +77,73 @@ const listAdminProjects = asyncHandler(async (req, res) => {
     Project.countDocuments(filter),
   ]);
   res.json(paginateResult({ data, total, page, limit }));
+});
+
+const listAdminContracts = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = paginateQuery(req.query);
+  const filter = {};
+  if (req.query.status) filter.status = req.query.status;
+  const [data, total] = await Promise.all([
+    Contract.find(filter)
+      .populate({ path: 'projectId', select: 'title status' })
+      .populate({ path: 'clientId', select: USER_PUBLIC_FIELDS })
+      .populate({ path: 'freelancerId', select: USER_PUBLIC_FIELDS })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Contract.countDocuments(filter),
+  ]);
+  const ids = data.map((c) => c._id);
+  const payments = await Payment.find({ contractId: { $in: ids } });
+  const byContract = Object.fromEntries(payments.map((p) => [p.contractId.toString(), p]));
+  res.json(
+    paginateResult({
+      data: data.map((c) => ({ ...c.toObject(), payment: byContract[c._id.toString()] || null })),
+      total,
+      page,
+      limit,
+    })
+  );
+});
+
+const listAudit = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = paginateQuery(req.query);
+  const filter = {};
+  if (req.query.action) filter.action = req.query.action;
+  const [data, total] = await Promise.all([
+    AuditLog.find(filter)
+      .populate({ path: 'actorId', select: USER_PUBLIC_FIELDS })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    AuditLog.countDocuments(filter),
+  ]);
+  res.json(paginateResult({ data, total, page, limit }));
+});
+
+const verifySkillsSchema = z.object({
+  body: z.object({
+    skills: z.array(z.string().max(40)).max(30),
+  }),
+});
+
+const verifySkills = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) throw new ApiError(404, 'User not found');
+  if (user.role !== 'freelancer') throw new ApiError(400, 'Only freelancers have verified skills');
+  user.freelancerProfile = {
+    ...(user.freelancerProfile.toObject?.() || user.freelancerProfile || {}),
+    verifiedSkills: req.body.skills,
+  };
+  await user.save();
+  await audit({
+    actorId: req.user._id,
+    action: 'verify_skills',
+    targetType: 'user',
+    targetId: user._id,
+    meta: { skills: req.body.skills },
+  });
+  res.json({ user });
 });
 
 const createReportSchema = z.object({
@@ -114,6 +189,13 @@ const updateReport = asyncHandler(async (req, res) => {
   if (!report) throw new ApiError(404, 'Report not found');
   report.status = req.body.status;
   await report.save();
+  await audit({
+    actorId: req.user._id,
+    action: 'report_update',
+    targetType: 'report',
+    targetId: report._id,
+    meta: { status: report.status },
+  });
   await notify({
     userId: report.reporterId,
     type: 'report_update',
@@ -129,10 +211,14 @@ module.exports = {
   listUsers,
   blockUser,
   listAdminProjects,
+  listAdminContracts,
+  listAudit,
+  verifySkills,
   createReport,
   listReports,
   updateReport,
   createReportSchema,
   updateReportSchema,
+  verifySkillsSchema,
   closeProjectSchema,
 };

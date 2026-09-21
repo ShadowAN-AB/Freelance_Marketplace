@@ -1,6 +1,7 @@
 const { z } = require('zod');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Proposal = require('../models/Proposal');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
@@ -46,8 +47,8 @@ const populateClient = { path: 'clientId', select: USER_PUBLIC_FIELDS };
 const listProjects = asyncHandler(async (req, res) => {
   const { page, limit, skip } = paginateQuery(req.query);
   const filter = {};
-  if (req.query.status) filter.status = req.query.status;
-  else if (!req.query.mine) filter.status = 'open';
+  if (req.query.status && req.query.status !== 'all') filter.status = req.query.status;
+  else if (!req.query.mine && req.query.status !== 'all') filter.status = 'open';
   if (req.query.category) filter.category = req.query.category;
   if (req.query.clientId) filter.clientId = req.query.clientId;
   if (req.query.mine === 'true' && req.user) filter.clientId = req.user._id;
@@ -55,6 +56,10 @@ const listProjects = asyncHandler(async (req, res) => {
   if (req.query.skill) filter.skills = new RegExp(req.query.skill, 'i');
   if (req.query.minBudget) filter.budgetMax = { $gte: Number(req.query.minBudget) };
   if (req.query.maxBudget) filter.budgetMin = { $lte: Number(req.query.maxBudget) };
+  if (req.query.dueSoon === 'true') {
+    const soon = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    filter.deadline = { $gte: new Date(), $lte: soon };
+  }
 
   const [data, total] = await Promise.all([
     Project.find(filter).populate(populateClient).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -68,7 +73,11 @@ const getProject = asyncHandler(async (req, res) => {
     .populate(populateClient)
     .populate({ path: 'hiredFreelancerId', select: USER_PUBLIC_FIELDS });
   if (!project) throw new ApiError(404, 'Project not found');
-  res.json({ project });
+  let myProposal = null;
+  if (req.user?.role === 'freelancer') {
+    myProposal = await Proposal.findOne({ projectId: project._id, freelancerId: req.user._id });
+  }
+  res.json({ project, myProposal });
 });
 
 const createProject = asyncHandler(async (req, res) => {

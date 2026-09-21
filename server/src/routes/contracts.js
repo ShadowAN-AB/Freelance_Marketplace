@@ -6,8 +6,10 @@ const {
   completeContract,
   requestRevision,
   createReview,
+  cancelContract,
   reviewSchema,
   revisionSchema,
+  cancelSchema,
 } = require('../controllers/contractController');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
@@ -25,6 +27,7 @@ router.post(
 );
 router.post('/:id/request-revision', protect, authorize('client'), validate(revisionSchema), requestRevision);
 router.post('/:id/complete', protect, authorize('client'), completeContract);
+router.post('/:id/cancel', protect, authorize('client', 'freelancer'), validate(cancelSchema), cancelContract);
 router.post('/:id/reviews', protect, authorize('client', 'freelancer'), validate(reviewSchema), createReview);
 
 module.exports = router;

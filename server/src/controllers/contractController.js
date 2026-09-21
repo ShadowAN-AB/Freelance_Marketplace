@@ -7,7 +7,11 @@ const User = require('../models/User');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { notify } = require('../services/notify');
+const { sendMail } = require('../services/mailer');
+const { persistUploads } = require('../services/storage');
+const { markReleased, markRefunded } = require('../services/payments');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const { paginateQuery, paginateResult } = require('../utils/paginate');
 
 const populate = [
   { path: 'projectId' },
@@ -16,14 +20,18 @@ const populate = [
 ];
 
 const myContracts = asyncHandler(async (req, res) => {
+  const { page, limit, skip } = paginateQuery(req.query);
   const filter =
     req.user.role === 'client'
       ? { clientId: req.user._id }
       : req.user.role === 'freelancer'
         ? { freelancerId: req.user._id }
         : {};
-  const contracts = await Contract.find(filter).populate(populate).sort({ createdAt: -1 });
-  res.json({ data: contracts });
+  const [data, total] = await Promise.all([
+    Contract.find(filter).populate(populate).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Contract.countDocuments(filter),
+  ]);
+  res.json(paginateResult({ data, total, page, limit }));
 });
 
 const getContract = asyncHandler(async (req, res) => {
@@ -47,12 +55,8 @@ const submitWork = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Only the hired freelancer can submit work');
   }
   if (contract.status !== 'active') throw new ApiError(400, 'Contract is not active');
-  if (Array.isArray(req.files)) {
-    contract.deliverables = req.files.map((file) => ({
-      originalName: file.originalname,
-      url: `/uploads/${file.filename}`,
-      uploadedAt: new Date(),
-    }));
+  if (Array.isArray(req.files) && req.files.length) {
+    contract.deliverables = await persistUploads(req.files);
   }
   contract.workSubmittedAt = new Date();
   contract.revisionNote = '';
@@ -78,10 +82,8 @@ const completeContract = asyncHandler(async (req, res) => {
   contract.status = 'completed';
   contract.completedAt = new Date();
   await contract.save();
-  await Payment.findOneAndUpdate(
-    { contractId: contract._id },
-    { status: 'released', releasedAt: new Date() }
-  );
+  const payment = await Payment.findOne({ contractId: contract._id });
+  if (payment) await markReleased(payment);
   await Project.findByIdAndUpdate(contract.projectId._id, { status: 'completed' });
   await notify({
     userId: contract.freelancerId,
@@ -116,6 +118,47 @@ const requestRevision = asyncHandler(async (req, res) => {
     type: 'revision_requested',
     title: 'Revision requested',
     body: `${req.user.name} asked for changes on ${contract.projectId.title}`,
+    link: `/app/work`,
+  });
+  const freelancer = await User.findById(contract.freelancerId).select('email');
+  if (freelancer?.email) {
+    await sendMail({
+      to: freelancer.email,
+      subject: `Revision requested on ${contract.projectId.title}`,
+      text: req.body.note,
+    });
+  }
+  res.json({ contract });
+});
+
+const cancelSchema = z.object({
+  body: z.object({
+    reason: z.string().min(8).max(2000),
+  }),
+});
+
+const cancelContract = asyncHandler(async (req, res) => {
+  const contract = await Contract.findById(req.params.id).populate('projectId');
+  if (!contract) throw new ApiError(404, 'Contract not found');
+  const uid = req.user._id.toString();
+  const isParty =
+    contract.clientId.toString() === uid || contract.freelancerId.toString() === uid || req.user.role === 'admin';
+  if (!isParty) throw new ApiError(403, 'Not a party to this contract');
+  if (contract.status !== 'active') throw new ApiError(400, 'Only active contracts can be cancelled');
+  contract.status = 'cancelled';
+  contract.disputeReason = req.body.reason;
+  contract.cancelledAt = new Date();
+  contract.cancelledBy = req.user._id;
+  await contract.save();
+  const payment = await Payment.findOne({ contractId: contract._id });
+  if (payment && payment.status === 'held') await markRefunded(payment);
+  await Project.findByIdAndUpdate(contract.projectId._id, { status: 'cancelled' });
+  const otherId = contract.clientId.toString() === uid ? contract.freelancerId : contract.clientId;
+  await notify({
+    userId: otherId,
+    type: 'contract_cancelled',
+    title: 'Contract cancelled',
+    body: `${req.user.name} cancelled ${contract.projectId.title}: ${req.body.reason}`,
     link: `/app/work`,
   });
   res.json({ contract });
@@ -183,7 +226,8 @@ const myPayments = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
   const totalReleased = payments.filter((p) => p.status === 'released').reduce((s, p) => s + p.amount, 0);
   const totalHeld = payments.filter((p) => p.status === 'held').reduce((s, p) => s + p.amount, 0);
-  res.json({ data: payments, totalReleased, totalHeld });
+  const totalRefunded = payments.filter((p) => p.status === 'refunded').reduce((s, p) => s + p.amount, 0);
+  res.json({ data: payments, totalReleased, totalHeld, totalRefunded });
 });
 
 module.exports = {
@@ -195,6 +239,8 @@ module.exports = {
   createReview,
   listUserReviews,
   myPayments,
+  cancelContract,
   reviewSchema,
   revisionSchema,
+  cancelSchema,
 };

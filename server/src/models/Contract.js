@@ -13,6 +13,9 @@ const contractSchema = new mongoose.Schema(
     completedAt: { type: Date },
     revisionNote: { type: String, default: '', maxlength: 2000 },
     revisionCount: { type: Number, default: 0, min: 0 },
+    disputeReason: { type: String, default: '', maxlength: 2000 },
+    cancelledAt: { type: Date },
+    cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     deliverables: [
       {
         originalName: { type: String, required: true, maxlength: 240 },

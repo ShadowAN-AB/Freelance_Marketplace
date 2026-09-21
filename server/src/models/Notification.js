@@ -10,6 +10,7 @@ const TYPES = [
   'review_received',
   'report_update',
   'revision_requested',
+  'contract_cancelled',
 ];
 
 const notificationSchema = new mongoose.Schema(
