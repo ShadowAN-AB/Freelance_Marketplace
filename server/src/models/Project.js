@@ -12,6 +12,14 @@ const CATEGORIES = [
 
 const STATUSES = ['open', 'in_progress', 'completed', 'cancelled', 'closed'];
 
+const milestonePlanSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true, maxlength: 120 },
+    amount: { type: Number, required: true, min: 0 },
+  },
+  { _id: true }
+);
+
 const projectSchema = new mongoose.Schema(
   {
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -23,6 +31,9 @@ const projectSchema = new mongoose.Schema(
     budgetMax: { type: Number, required: true, min: 0 },
     deadline: { type: Date, required: true },
     status: { type: String, enum: STATUSES, default: 'open', index: true },
+    pricingType: { type: String, enum: ['fixed', 'hourly'], default: 'fixed' },
+    milestones: [milestonePlanSchema],
+    invitedFreelancerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     hiredProposalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Proposal' },
     hiredFreelancerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },

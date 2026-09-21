@@ -6,6 +6,7 @@ const paymentSchema = new mongoose.Schema(
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     amount: { type: Number, required: true, min: 0 },
+    releasedAmount: { type: Number, default: 0, min: 0 },
     status: { type: String, enum: ['held', 'released', 'refunded'], default: 'held', index: true },
     releasedAt: { type: Date },
     refundedAt: { type: Date },

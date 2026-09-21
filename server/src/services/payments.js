@@ -10,9 +10,7 @@ function getStripe() {
   return require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
-async function markReleased(payment) {
-  payment.status = 'released';
-  payment.releasedAt = new Date();
+async function captureIfNeeded(payment) {
   if (stripeEnabled() && payment.providerRef) {
     try {
       const stripe = getStripe();
@@ -21,12 +19,31 @@ async function markReleased(payment) {
       logger.warn({ err: err.message }, 'stripe capture skipped');
     }
   }
+}
+
+async function releasePartial(payment, amount) {
+  const increment = Math.max(0, Number(amount) || 0);
+  const next = Math.min(payment.amount, (payment.releasedAmount || 0) + increment);
+  payment.releasedAmount = next;
+  if (next >= payment.amount) {
+    payment.status = 'released';
+    payment.releasedAt = new Date();
+    await captureIfNeeded(payment);
+  }
   await payment.save();
   return payment;
 }
 
+async function markReleased(payment) {
+  const remaining = Math.max(0, payment.amount - (payment.releasedAmount || 0));
+  return releasePartial(payment, remaining);
+}
+
 async function markRefunded(payment) {
-  payment.status = 'refunded';
+  if ((payment.releasedAmount || 0) >= payment.amount) return payment;
+  if ((payment.releasedAmount || 0) === 0) {
+    payment.status = 'refunded';
+  }
   payment.refundedAt = new Date();
   if (stripeEnabled() && payment.providerRef) {
     try {
@@ -40,4 +57,4 @@ async function markRefunded(payment) {
   return payment;
 }
 
-module.exports = { stripeEnabled, getStripe, markReleased, markRefunded };
+module.exports = { stripeEnabled, getStripe, markReleased, markRefunded, releasePartial };

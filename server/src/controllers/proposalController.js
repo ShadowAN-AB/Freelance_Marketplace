@@ -100,12 +100,32 @@ const acceptProposal = asyncHandler(async (req, res) => {
     { status: 'rejected' }
   );
 
+  const freelancer = await require('../models/User').findById(proposal.freelancerId);
+  const pricingType = project.pricingType || 'fixed';
+  const hourlyRate = pricingType === 'hourly' ? Number(freelancer?.freelancerProfile?.hourlyRate || 0) : 0;
+  const amount = pricingType === 'hourly' ? project.budgetMax : proposal.bidAmount;
+  const planned = (project.milestones || []).filter((m) => m.title && m.amount > 0);
+  const milestones =
+    pricingType === 'hourly'
+      ? []
+      : planned.length >= 2
+        ? planned.map((m) => ({
+            title: m.title,
+            amount: m.amount,
+            status: 'pending',
+            deliverables: [],
+          }))
+        : [{ title: 'Full project', amount, status: 'pending', deliverables: [] }];
+
   const contract = await Contract.create({
     projectId: project._id,
     clientId: project.clientId,
     freelancerId: proposal.freelancerId,
     proposalId: proposal._id,
-    amount: proposal.bidAmount,
+    amount,
+    pricingType,
+    hourlyRate,
+    milestones,
     status: 'active',
     startDate: new Date(),
   });
@@ -113,7 +133,8 @@ const acceptProposal = asyncHandler(async (req, res) => {
     contractId: contract._id,
     clientId: project.clientId,
     freelancerId: proposal.freelancerId,
-    amount: proposal.bidAmount,
+    amount,
+    releasedAmount: 0,
     status: 'held',
     provider: stripeEnabled() ? 'stripe' : 'simulated',
   });

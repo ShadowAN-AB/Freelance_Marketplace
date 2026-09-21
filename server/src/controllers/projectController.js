@@ -6,6 +6,7 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 const { normalizeSkills, matchScore } = require('../utils/skills');
+const { notify } = require('../services/notify');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 
 const CATEGORIES = [
@@ -27,7 +28,29 @@ const createSchema = z.object({
     budgetMin: z.number().min(0),
     budgetMax: z.number().min(0),
     deadline: z.string().or(z.date()),
-  }).refine((b) => b.budgetMax >= b.budgetMin, { message: 'budgetMax must be >= budgetMin', path: ['budgetMax'] }),
+    pricingType: z.enum(['fixed', 'hourly']).optional().default('fixed'),
+    milestones: z
+      .array(z.object({ title: z.string().min(1).max(120), amount: z.number().min(0) }))
+      .max(3)
+      .optional(),
+  }).superRefine((b, ctx) => {
+    if (b.budgetMax < b.budgetMin) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'budgetMax must be >= budgetMin', path: ['budgetMax'] });
+    }
+    const rows = (b.milestones || []).filter((m) => m.title && m.amount > 0);
+    if (b.pricingType === 'hourly' && rows.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Hourly projects cannot use milestones', path: ['milestones'] });
+    }
+    if (rows.length && (rows.length < 2 || rows.length > 3)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Use 2 or 3 milestones', path: ['milestones'] });
+    }
+    if (rows.length) {
+      const sum = rows.reduce((s, m) => s + m.amount, 0);
+      if (sum !== b.budgetMax) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Milestone amounts must add up to the max budget', path: ['milestones'] });
+      }
+    }
+  }),
 });
 
 const updateSchema = z.object({
@@ -39,6 +62,11 @@ const updateSchema = z.object({
     budgetMin: z.number().min(0).optional(),
     budgetMax: z.number().min(0).optional(),
     deadline: z.string().or(z.date()).optional(),
+    pricingType: z.enum(['fixed', 'hourly']).optional(),
+    milestones: z
+      .array(z.object({ title: z.string().min(1).max(120), amount: z.number().min(0) }))
+      .max(3)
+      .optional(),
   }),
 });
 
@@ -91,6 +119,8 @@ const createProject = asyncHandler(async (req, res) => {
     budgetMin: body.budgetMin,
     budgetMax: body.budgetMax,
     deadline: body.deadline,
+    pricingType: body.pricingType || 'fixed',
+    milestones: body.pricingType === 'hourly' ? [] : body.milestones || [],
   });
   res.status(201).json({ project });
 });
@@ -110,7 +140,24 @@ const updateProject = asyncHandler(async (req, res) => {
   if (body.budgetMin !== undefined) project.budgetMin = body.budgetMin;
   if (body.budgetMax !== undefined) project.budgetMax = body.budgetMax;
   if (body.deadline) project.deadline = body.deadline;
+  if (body.pricingType) project.pricingType = body.pricingType;
+  if (body.milestones) {
+    if (project.pricingType === 'hourly' && body.milestones.length) {
+      throw new ApiError(400, 'Hourly projects cannot use milestones');
+    }
+    project.milestones = body.milestones;
+  }
   if (project.budgetMax < project.budgetMin) throw new ApiError(400, 'budgetMax must be >= budgetMin');
+  if (project.pricingType === 'fixed' && project.milestones?.length) {
+    const rows = project.milestones.filter((m) => m.title && m.amount > 0);
+    if (rows.length && (rows.length < 2 || rows.length > 3)) {
+      throw new ApiError(400, 'Use 2 or 3 milestones');
+    }
+    if (rows.length) {
+      const sum = rows.reduce((s, m) => s + m.amount, 0);
+      if (sum !== project.budgetMax) throw new ApiError(400, 'Milestone amounts must add up to the max budget');
+    }
+  }
   await project.save();
   res.json({ project });
 });
@@ -156,6 +203,35 @@ const recommendedProjects = asyncHandler(async (req, res) => {
   res.json({ data: ranked });
 });
 
+const inviteSchema = z.object({
+  body: z.object({ freelancerId: z.string().min(1) }),
+});
+
+const inviteToBid = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) throw new ApiError(404, 'Project not found');
+  if (project.clientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'Only the client can invite talent');
+  }
+  if (project.status !== 'open') throw new ApiError(400, 'Only open projects can invite bids');
+  const freelancer = await User.findOne({ _id: req.body.freelancerId, role: 'freelancer', isBlocked: false });
+  if (!freelancer) throw new ApiError(404, 'Freelancer not found');
+  const already = (project.invitedFreelancerIds || []).some((id) => id.toString() === freelancer._id.toString());
+  if (already) {
+    return res.json({ project, invited: true, duplicate: true });
+  }
+  project.invitedFreelancerIds = [...(project.invitedFreelancerIds || []), freelancer._id];
+  await project.save();
+  await notify({
+    userId: freelancer._id,
+    type: 'project_invite',
+    title: 'Invited to bid',
+    body: `${req.user.name} invited you to bid on ${project.title}`,
+    link: `/projects/${project._id}`,
+  });
+  res.status(201).json({ project, invited: true });
+});
+
 module.exports = {
   listProjects,
   getProject,
@@ -164,6 +240,8 @@ module.exports = {
   cancelProject,
   projectMatches,
   recommendedProjects,
+  inviteToBid,
   createSchema,
   updateSchema,
+  inviteSchema,
 };
