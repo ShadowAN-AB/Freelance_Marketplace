@@ -36,15 +36,48 @@ function escrowLabel(payment) {
 export default function WorkPage() {
   const { user } = useAuth()
   const qc = useQueryClient()
+  const [status, setStatus] = useState('all')
   const { data, isLoading } = useQuery({
-    queryKey: ['contracts-me'],
-    queryFn: async () => (await api.get('/contracts/me', { params: { limit: 50 } })).data,
+    queryKey: ['contracts-me', status],
+    queryFn: async () =>
+      (
+        await api.get('/contracts/me', {
+          params: {
+            limit: 50,
+            status: status === 'all' || status === 'submitted' ? undefined : status,
+          },
+        })
+      ).data,
   })
   if (isLoading) return <Spinner />
-  const list = data?.data || []
+  const list = (data?.data || []).filter((c) => {
+    if (status !== 'submitted') return true
+    return (
+      c.status === 'active' &&
+      (c.workSubmittedAt || (c.milestones || []).some((m) => m.status === 'submitted'))
+    )
+  })
   return (
     <div>
       <h1 className="font-display text-4xl">{user.role === 'client' ? 'Hired work' : 'Active work'}</h1>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {[
+          ['all', 'All'],
+          ['active', 'Active'],
+          ['submitted', 'Submitted'],
+          ['completed', 'Completed'],
+          ['cancelled', 'Cancelled'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setStatus(id)}
+            className={`rounded-full px-3 py-1 text-sm font-bold ${status === id ? 'bg-coral text-white' : 'border-2 border-ink/10 bg-white'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       {!list.length ? <div className="mt-8"><EmptyState title="No contracts" body="Hire or get hired to see work here." /></div> : null}
       <ul className="mt-6 space-y-4">
         {list.map((c) => (

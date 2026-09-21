@@ -1,7 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '../../services/api'
-import { EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
+import { Button, EmptyState, Spinner, StatusBadge } from '../../components/ui/Primitives'
 import { inr } from '../../lib/format'
+
+async function downloadLedger() {
+  const res = await api.get('/payments/me.csv', { responseType: 'blob' })
+  const url = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'freelancehub-ledger.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function EarningsPage() {
   const { data, isLoading } = useQuery({
@@ -11,7 +21,12 @@ export default function EarningsPage() {
   if (isLoading) return <Spinner />
   return (
     <div>
-      <h1 className="font-display text-4xl">Earnings</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-4xl">Earnings</h1>
+        <Button variant="ghost" type="button" onClick={downloadLedger}>
+          Download CSV
+        </Button>
+      </div>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         <div className="rounded-3xl bg-gradient-to-br from-teal to-teal-2 p-5 text-white shadow-[6px_6px_0_rgba(28,18,8,0.12)]">
           <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-80">Released</p>

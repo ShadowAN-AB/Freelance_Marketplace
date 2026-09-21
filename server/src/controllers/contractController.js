@@ -46,6 +46,9 @@ const myContracts = asyncHandler(async (req, res) => {
       : req.user.role === 'freelancer'
         ? { freelancerId: req.user._id }
         : {};
+  if (req.query.status && ['active', 'completed', 'cancelled'].includes(req.query.status)) {
+    filter.status = req.query.status;
+  }
   const [data, total] = await Promise.all([
     Contract.find(filter).populate(populate).sort({ createdAt: -1 }).skip(skip).limit(limit),
     Contract.countDocuments(filter),
@@ -284,6 +287,42 @@ const myPayments = asyncHandler(async (req, res) => {
   res.json({ data: payments, totalReleased, totalHeld, totalRefunded });
 });
 
+function csvCell(value) {
+  const s = String(value ?? '');
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+const myPaymentsCsv = asyncHandler(async (req, res) => {
+  const filter =
+    req.user.role === 'client'
+      ? { clientId: req.user._id }
+      : { freelancerId: req.user._id };
+  const payments = await Payment.find(filter)
+    .populate({ path: 'contractId', populate: { path: 'projectId', select: 'title' } })
+    .sort({ createdAt: -1 });
+  const releasedOf = (p) => {
+    if (typeof p.releasedAmount === 'number' && p.releasedAmount > 0) return p.releasedAmount;
+    return p.status === 'released' ? p.amount : 0;
+  };
+  const lines = [['title', 'status', 'amount', 'released', 'held']];
+  for (const p of payments) {
+    const released = releasedOf(p);
+    const held = p.status === 'held' ? Math.max(0, p.amount - (p.releasedAmount || 0)) : 0;
+    lines.push([
+      p.contractId?.projectId?.title || 'Contract',
+      p.status,
+      p.amount,
+      released,
+      held,
+    ]);
+  }
+  const body = lines.map((row) => row.map(csvCell).join(',')).join('\n');
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="freelancehub-ledger.csv"');
+  res.send(`${body}\n`);
+});
+
 const submitMilestoneWork = asyncHandler(async (req, res) => {
   const contract = await Contract.findById(req.params.id).populate('projectId');
   if (!contract) throw new ApiError(404, 'Contract not found');
@@ -476,6 +515,7 @@ module.exports = {
   createReview,
   listUserReviews,
   myPayments,
+  myPaymentsCsv,
   cancelContract,
   submitMilestoneWork,
   requestMilestoneRevision,

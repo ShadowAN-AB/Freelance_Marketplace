@@ -582,4 +582,14 @@ describe('FreelanceHub API', () => {
     assert.ok(nearby.body.data.some((p) => p._id === similar.body.project._id));
     assert.ok(nearby.body.data.every((p) => p.title !== 'Write a product case study pack'));
   });
+
+  it('exports an empty payment ledger as csv', async () => {
+    const client = await register('client', 'csv-client@test.dev');
+    const csv = await request(app)
+      .get('/api/payments/me.csv')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.match(csv.headers['content-type'], /text\/csv/);
+    assert.match(csv.text, /title,status,amount,released,held/);
+  });
 });
