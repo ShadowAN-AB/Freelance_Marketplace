@@ -12,7 +12,9 @@ Repository: [github.com/ShadowAN-AB/Freelance_Marketplace](https://github.com/Sh
 | Server | Node.js, Express, Mongoose, JWT (httpOnly cookies + refresh), bcrypt, Multer, Socket.IO, Zod |
 | Database | MongoDB 7 |
 
-Payments, object storage, Redis presence, and SMTP are optional env-based integrations. The demo still uses simulated escrow if they are unset.
+Payments, object storage, Redis presence, SMTP, and LLM matching are optional env-based integrations. Simulated escrow and skill-overlap matching still work if they are unset.
+
+Local `npm run dev` is one API process. `docker compose up` splits that process into **auth**, **marketplace**, **realtime**, and a **gateway** on port 5001.
 
 ## Local setup
 
@@ -45,7 +47,7 @@ cd client && npm test
 cd client && npm run e2e
 ```
 
-GitHub Actions runs 21 API tests, the client build, then seeds `freelancehub_e2e` before the Playwright hire-loop and viva smokes.
+GitHub Actions runs the server test suite (hire loop, admin, matching, gateway routing), the client build, then seeds `freelancehub_e2e` before the Playwright hire-loop and viva smokes.
 
 ## Docker
 
@@ -53,7 +55,9 @@ GitHub Actions runs 21 API tests, the client build, then seeds `freelancehub_e2e
 JWT_SECRET=replace-with-a-long-random-string docker compose up --build
 ```
 
-Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do not run `npm run seed` against production.
+Compose starts Mongo, an API gateway, three workers (auth / marketplace / realtime), and an nginx client on http://localhost:8080. Health: gateway `http://localhost:5001/health` lists backend ok flags. Seed against Mongo, not inside a worker. Do not run `npm run seed` against production.
+
+Local viva still uses the monolith: `cd server && npm run dev` (SERVICE defaults to `all`).
 
 ## Domain rules
 
@@ -63,6 +67,7 @@ Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do 
 - Either party can cancel an active contract; remaining held escrow is refunded.
 - Chat requires a proposal on that project. Socket join is participant-checked.
 - Reviews open only after the client completes the contract.
+- Talent ranking is skill overlap plus a written rationale. An OpenAI-compatible LLM is optional (`LLM_API_KEY`).
 
 ## Viva demo (5 minutes)
 
@@ -75,12 +80,13 @@ Password for every seeded account: `Password123!`
 5. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
 6. Active work deep-links the Scan MVP card; download the notes, then Approve 4h on the hourly desk.
 7. Message Aisha from the work card. Admin → Audit has hire/submit/report rows. Browse `/projects?pricingType=hourly`.
+8. Priya’s proposals inbox: **Suggested talent** shows overlap % and a one-line reason. Compose: curl gateway `/health` to show auth / marketplace / realtime.
 
 ## Layout
 
 ```
 client/   React app
-server/   Express API + Socket.IO
+server/   Express API (SERVICE=all locally) + gateway.js for compose
 docs/     HTML + PDF project documentation
-docker-compose.yml   Mongo + API + web
+docker-compose.yml   Mongo + auth + marketplace + realtime + gateway + web
 ```

@@ -180,7 +180,7 @@
   <div class="meta">
     <p><strong>Repository:</strong> github.com/ShadowAN-AB/Freelance_Marketplace</p>
     <p><strong>Local app:</strong> http://127.0.0.1:5178 or http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001 &nbsp;·&nbsp; <strong>Compose web:</strong> http://localhost:8080</p>
-    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.3</p>
+    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.4</p>
   </div>
 </section>
 
@@ -205,6 +205,7 @@
   <li><a href="#viva">17. Viva talking points</a></li>
   <li><a href="#sprint">18. Presentation sprint (v2.2)</a></li>
   <li><a href="#worthy">19. Worthy viva sprint (v2.3)</a></li>
+  <li><a href="#split">20. LLM matching and service split (v2.4)</a></li>
 </ol>
 
 <h2 id="intro">1. What this project is</h2>
@@ -232,15 +233,17 @@
       <li>Public client pages and richer freelancer portfolios</li>
       <li>Admin analytics, contracts/escrow, audit log (no impersonation)</li>
       <li>API tests, GitHub Actions CI, lint, Docker Compose</li>
+      <li>Optional OpenAI-compatible LLM match rationales (skill overlap always works)</li>
+      <li>Compose split: gateway + auth + marketplace + realtime (local <code>npm run dev</code> stays one process)</li>
     </ul>
   </div>
   <div class="card">
     <h3>Out of scope (still)</h3>
     <ul>
       <li>Google / social login</li>
-      <li>LLM matching or generated cover letters</li>
+      <li>Generated cover letters</li>
       <li>Native mobile apps</li>
-      <li>Multi-currency or a microservice split</li>
+      <li>Multi-currency</li>
       <li>Mandatory Stripe — it is a vertical slice behind env vars, not the default demo</li>
     </ul>
   </div>
@@ -301,6 +304,7 @@
 </figure>
 
 <p>On load, AuthContext calls <code>GET /api/auth/me</code> (cookies or stored Bearer token). A 401 triggers <code>POST /api/auth/refresh</code>; if that fails the UI signs out. Toasts replace <code>alert()</code> for proposal success and work actions.</p>
+<p>Local development still runs one Node process (<code>SERVICE=all</code>, default). Docker Compose starts four Node containers: <strong>auth</strong> (login, users), <strong>marketplace</strong> (projects, hire, escrow, admin), <strong>realtime</strong> (chat, notifications, Socket.IO), and a <strong>gateway</strong> on :5001 that proxies by path. They share Mongo and <code>JWT_SECRET</code>. Tests always hit the composed app so the hire loop does not depend on Docker.</p>
 
 <h2 id="layout">5. Repository layout</h2>
 <pre>Freelance_Marketplace/
@@ -465,7 +469,7 @@
 <p>Browse keeps <code>q</code>, category, pricing type (fixed/hourly), due-soon, sort (newest / highest budget / due soonest), and page in the URL. Cards show <strong>Fixed price</strong>, <strong>Fixed · N milestones</strong>, or <strong>Hourly</strong>, plus pending bid counts and a relative due date (<code>due in 3d</code> / <code>overdue 2d</code>). Project detail lists the planned milestone table and a <strong>Similar open work</strong> strip from <code>GET /projects/:id/similar</code> (same category or overlapping skills). Clients see pending bid counts on My projects and can <strong>Duplicate</strong> any brief into a fresh open listing (new deadline, no hire). Talent browse keeps hourly-rate bounds in the URL. Matching score is skill overlap, capped at 100%.</p>
 
 <h3>9.3 Proposals and shortlist</h3>
-<p>Cover letter (counted out of 4000), bid amount, estimated days. The bid form warns when the amount is above <code>budgetMax</code>. Clients star pending proposals. The compare table can sort by shortlist, lowest bid, fastest delivery, or skill match, and flags over-budget rows. Pending rows have Accept, Reject, and Message. After a pending bid, either party can <code>POST /conversations</code> with <code>{ projectId, userId }</code> and land on <code>/app/messages/:id</code>. Outsiders still get 403.</p>
+<p>Cover letter (counted out of 4000), bid amount, estimated days. The bid form warns when the amount is above <code>budgetMax</code>. Clients star pending proposals. The compare table can sort by shortlist, lowest bid, fastest delivery, or skill match, and flags over-budget rows. Pending rows have Accept, Reject, and Message. After a pending bid, either party can <code>POST /conversations</code> with <code>{ projectId, userId }</code> and land on <code>/app/messages/:id</code>. Outsiders still get 403. <strong>Suggested talent</strong> ranks freelancers with <code>matchScore</code> and a one-line rationale. If <code>LLM_API_KEY</code> is set the rationale is written by an OpenAI-compatible model; otherwise the server writes it from overlap and gaps. Tests force the heuristic engine.</p>
 
 <h3>9.4 Work, deliverables, revisions, disputes</h3>
 <p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. Notifications, dashboard cards, and My projects “in progress” rows deep-link to <code>/app/work/:id</code> so the matching contract expands. The work card shows an escrow progress bar (<code>releasedAmount / amount</code> plus “1 of 2 slices”). The client types a per-slice revision note instead of a hardcoded string. Approve the whole job, release one milestone, approve hourly time against the escrow cap, or Cancel &amp; refund remaining escrow. Partial payouts live on <code>Payment.releasedAmount</code> — there is still one payment row per contract. Ledger rows on Payments / Earnings link to <code>/app/work/:id/invoice</code>.</p>
@@ -584,8 +588,8 @@
 </div>
 
 <h2 id="quality">14. Tests, CI, and quality</h2>
-<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has <strong>21 cases</strong>: register/login, public marketplace stats, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, complete then review + <code>GET /users/:id/reviews</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, pricing-type list filter, budget sort, pending bid counts + similar projects, CSV ledger export, project duplicate (owner-only), open conversation after a pending bid (outsider 403), admin stats 200 vs freelancer 403, reject a pending bid, create a report then admin list, and unverified clients blocked from posting when the verify gate is on.</p>
-<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (INR, pricing labels, relative times, due dates, escrow progress). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then <code>npm --prefix server run seed</code> against <code>freelancehub_e2e</code> before Playwright so demo listings exist.</p>
+<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The hire-loop suite is unchanged, plus heuristic match rationales, gateway path routing, and an auth-only app that 404s marketplace routes. Matching tests never call an LLM (<code>NODE_ENV=test</code> disables it).</p>
+<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (INR, pricing labels, relative times, due dates, escrow progress). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then <code>npm --prefix server run seed</code> against <code>freelancehub_e2e</code> before Playwright so demo listings exist. CI starts the monolith (<code>SERVICE=all</code>), not the four Compose workers.</p>
 
 <h2 id="setup">15. Local setup and demo</h2>
 <h3>Prerequisites</h3>
@@ -598,7 +602,7 @@ cd server && npm install && npm run seed && npm run dev
 cd client && npm install && npm run dev</pre>
 <p>Open <strong>http://127.0.0.1:5178</strong> or <strong>http://localhost:5178</strong>. Health: <strong>http://localhost:5001/health</strong> (includes <code>mongo: true</code>). Keep <code>SKIP_EMAIL_VERIFY=true</code> in <code>server/.env</code> for the viva.</p>
 <pre>JWT_SECRET=replace-with-a-long-random-string docker compose up --build</pre>
-<p>Compose serves nginx on <strong>http://localhost:8080</strong> and proxies API/socket/uploads. Do not run <code>npm run seed</code> in production — the seed script exits if <code>NODE_ENV=production</code>.</p>
+<p>Compose serves nginx on <strong>http://localhost:8080</strong> and proxies API/socket/uploads to the <strong>gateway</strong> (<code>api:5001</code>). Workers listen on 5002–5004. Do not run <code>npm run seed</code> in production — the seed script exits if <code>NODE_ENV=production</code>. Local viva: keep using <code>npm run dev</code> as one process.</p>
 <p>Every seeded account uses password <code>Password123!</code>.</p>
 <table>
   <thead><tr><th>Role</th><th>Email</th><th>Notes</th></tr></thead>
@@ -639,7 +643,7 @@ cd client && npm install && npm run dev</pre>
   <li>If port 27017 already has a local MongoDB, Docker’s mapped port will fail or you will see an empty database. Point <code>MONGO_URI</code> at the instance that contains the seed.</li>
 </ul>
 <div class="note">
-  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.3: sequential feature pack, presentation sprint, then the worthy viva sprint (real Scan MVP file, hourly approve seed, work deep links, Message CTA, 21 API tests, CI seed before Playwright).
+  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.4: worthy viva sprint plus optional LLM match rationales and a Compose gateway split (auth / marketplace / realtime).
 </div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 
@@ -648,13 +652,14 @@ cd client && npm install && npm run dev</pre>
 <table>
   <thead><tr><th>Likely question</th><th>What to say</th></tr></thead>
   <tbody>
-    <tr><td>Why a MERN monolith, not microservices?</td><td>College demo has one team and one database. Splitting auth/projects/payments would add network hops without a production load. The API is still modular: models, controllers, routes, services.</td></tr>
+    <tr><td>Why split the API?</td><td>Local <code>npm run dev</code> is still one process so the viva never needs four terminals. Compose sets <code>SERVICE=auth|marketplace|realtime</code> behind a gateway. Shared Mongo and JWT. Health on :5001 lists which worker is up.</td></tr>
+    <tr><td>Is matching “AI”?</td><td>Ranking is deterministic skill overlap. The one-line reason uses an LLM only when <code>LLM_API_KEY</code> is set. Without a key you still see overlap % and a written gap list. Tests never call a model.</td></tr>
     <tr><td>Is the money real?</td><td>No. Hire writes a <code>Payment</code> with status <code>held</code>. Complete or milestone/hour approval increments <code>releasedAmount</code>. Cancel sets <code>refunded</code>. Stripe is behind env vars for a later slice.</td></tr>
     <tr><td>Why cookies and Bearer?</td><td>The SPA sends httpOnly cookies so XSS cannot steal the access token. Socket.IO and Playwright still use <code>Authorization: Bearer</code>. CSRF is required only for cookie POSTs; Bearer skips it.</td></tr>
     <tr><td>How do you stop double bids?</td><td>Unique index on <code>{ projectId, freelancerId }</code>. A second pending bid is 409. Withdraw sets <code>withdrawn</code>; the same row can go back to <code>pending</code>.</td></tr>
     <tr><td>Fixed vs hourly?</td><td>Fixed may split into 2–3 milestones that must sum to <code>budgetMax</code>. Hourly holds <code>budgetMax</code> as a cap; approved hours cannot exceed remaining escrow.</td></tr>
     <tr><td>How is chat authorised?</td><td>HTTP messages and socket <code>conversation:join</code> both check that the user is a participant. Join is not an open room id.</td></tr>
-    <tr><td>What is tested?</td><td>21 API tests on a throwaway Mongo database (hire loop, admin, reject, reviews, reports, chat open), Vitest for INR/pricing/escrow progress, Playwright hire-loop plus seeded viva smokes. GitHub Actions seeds <code>freelancehub_e2e</code> before Playwright.</td></tr>
+    <tr><td>What is tested?</td><td>Hire-loop API tests plus matching rationales, gateway path routing, and <code>SERVICE=auth</code> 404s on marketplace routes. Vitest for INR/pricing/escrow progress. Playwright hire-loop plus seeded viva smokes. GitHub Actions seeds <code>freelancehub_e2e</code> before Playwright.</td></tr>
     <tr><td>What would you do next if this shipped?</td><td>Rotate <code>JWT_SECRET</code>, turn off <code>SKIP_EMAIL_VERIFY</code>, put files on S3, turn on Stripe, put Socket.IO on Redis if you run more than one API process.</td></tr>
   </tbody>
 </table>
@@ -693,6 +698,23 @@ cd client && npm install && npm run dev</pre>
 </table>
 <div class="callout">
   <strong>Demo sentence (v2.3).</strong> “Priya’s dashboard jumps straight into Scan MVP. I will download the notes, release that slice, approve four hours on the hourly desk, message Aisha from the card, then open Admin → Audit so you can see the seeded hire and submit rows.”
+</div>
+<p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
+
+<h2 id="split">20. LLM matching and service split (v2.4)</h2>
+<p>Local demo is unchanged: one Express process. Docker Compose is the split you show if someone asks “where are the microservices?”</p>
+<table>
+  <thead><tr><th>Piece</th><th>What to show</th></tr></thead>
+  <tbody>
+    <tr><td>Matching</td><td><code>GET /projects/:id/matches</code> returns <code>engine: heuristic|llm</code>, overlap %, and a one-line rationale. Proposals inbox: Suggested talent. Freelancer dashboard recommendations use the same helper.</td></tr>
+    <tr><td>Gateway</td><td><code>GET /health</code> on :5001 → <code>service: freelancehub-gateway</code> plus <code>backends.auth/marketplace/realtime</code>.</td></tr>
+    <tr><td>Auth worker</td><td>:5002 — login, register, <code>/api/users</code>.</td></tr>
+    <tr><td>Marketplace worker</td><td>:5003 — projects, hire, escrow, admin, reviews, uploads.</td></tr>
+    <tr><td>Realtime worker</td><td>:5004 — conversations, notifications, Socket.IO.</td></tr>
+  </tbody>
+</table>
+<div class="note">
+  <strong>Honest limit.</strong> This is a process split in front of one Mongo database, not independently deployable data stores. JWT is shared. That is enough to show routing and failure isolation without breaking the hire loop.
 </div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 </body>
