@@ -28,7 +28,10 @@ export default function MyProjectsPage() {
           <li key={p._id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div>
               <Link to={`/projects/${p._id}`} className="font-display text-2xl">{p.title}</Link>
-              <p className="text-sm text-muted">{pricingLabel(p)} · {inr(p.budgetMin)} – {inr(p.budgetMax)}</p>
+              <p className="text-sm text-muted">
+                {pricingLabel(p)} · {inr(p.budgetMin)} – {inr(p.budgetMax)}
+                {p.status === 'open' ? ` · ${p.proposalCount || 0} pending bid${p.proposalCount === 1 ? '' : 's'}` : ''}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <StatusBadge status={p.status} />

@@ -528,4 +528,58 @@ describe('FreelanceHub API', () => {
     assert.equal(fixed.body.data.length, 1);
     assert.ok(fixed.body.data.every((p) => p.pricingType === 'fixed'));
   });
+
+  it('counts pending proposals and returns similar open projects', async () => {
+    const client = await register('client', 'count-client@test.dev');
+    const other = await register('client', 'count-other@test.dev');
+    const freelancer = await register('freelancer', 'count-free@test.dev');
+    const base = {
+      description: 'Need a React dashboard with auth, charts, and a Node API.',
+      category: 'Web Development',
+      skills: ['react', 'node.js'],
+      budgetMin: 10000,
+      budgetMax: 20000,
+      deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+    };
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ ...base, title: 'Count bids on this dashboard' })
+      .expect(201);
+    const similar = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${other.body.token}`)
+      .send({ ...base, title: 'Nearby React ops desk listing' })
+      .expect(201);
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${other.body.token}`)
+      .send({
+        ...base,
+        title: 'Write a product case study pack',
+        category: 'Writing',
+        skills: ['copywriting'],
+      })
+      .expect(201);
+    await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'I have shipped similar ops dashboards and can start this week.',
+        bidAmount: 15000,
+        estimatedDays: 12,
+      })
+      .expect(201);
+
+    const mine = await request(app)
+      .get('/api/projects')
+      .query({ mine: 'true' })
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(mine.body.data[0].proposalCount, 1);
+
+    const nearby = await request(app).get(`/api/projects/${project.body.project._id}/similar`).expect(200);
+    assert.ok(nearby.body.data.some((p) => p._id === similar.body.project._id));
+    assert.ok(nearby.body.data.every((p) => p.title !== 'Write a product case study pack'));
+  });
 });

@@ -2,6 +2,7 @@ const express = require('express');
 const {
   listProjects,
   getProject,
+  similarProjects,
   createProject,
   updateProject,
   cancelProject,
@@ -19,6 +20,7 @@ const router = express.Router();
 
 router.get('/recommended', protect, authorize('freelancer'), recommendedProjects);
 router.get('/', optionalAuth, listProjects);
+router.get('/:id/similar', optionalAuth, similarProjects);
 router.get('/:id', optionalAuth, getProject);
 router.post('/', protect, authorize('client'), requireVerified, validate(createSchema), createProject);
 router.patch('/:id', protect, authorize('client'), requireVerified, validate(updateSchema), updateProject);

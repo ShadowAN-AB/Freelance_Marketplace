@@ -26,6 +26,7 @@ export function ProjectCard({ project }) {
       </div>
       <p className="mt-4 text-sm font-bold text-teal">
         {inr(project.budgetMin)} – {inr(project.budgetMax)} · due {formatDate(project.deadline)}
+        {project.proposalCount != null ? ` · ${project.proposalCount} bid${project.proposalCount === 1 ? '' : 's'}` : ''}
       </p>
       {project.clientId?.clientProfile?.companyName || project.clientId?.name ? (
         <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-muted">

@@ -160,8 +160,35 @@ export default function ProjectDetailsPage() {
         <div className="mt-10">
           <ReportControl targetType="project" targetId={id} />
         </div>
+        <SimilarProjects projectId={id} />
       </div>
     </PublicLayout>
+  )
+}
+
+function SimilarProjects({ projectId }) {
+  const { data } = useQuery({
+    queryKey: ['similar-projects', projectId],
+    queryFn: async () => (await api.get(`/projects/${projectId}/similar`)).data,
+  })
+  const list = data?.data || []
+  if (!list.length) return null
+  return (
+    <section className="mt-12">
+      <h2 className="font-display text-2xl">Similar open work</h2>
+      <ul className="mt-4 space-y-3">
+        {list.map((p) => (
+          <li key={p._id}>
+            <Link to={`/projects/${p._id}`} className="block rounded-2xl border-2 border-ink/10 bg-white p-4 hover:border-teal">
+              <p className="font-display text-xl">{p.title}</p>
+              <p className="text-sm text-muted">
+                {p.category} · {inr(p.budgetMin)} – {inr(p.budgetMax)}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

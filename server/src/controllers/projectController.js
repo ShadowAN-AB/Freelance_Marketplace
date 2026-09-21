@@ -92,10 +92,11 @@ const listProjects = asyncHandler(async (req, res) => {
     filter.deadline = { $gte: new Date(), $lte: soon };
   }
 
-  const [data, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     Project.find(filter).populate(populateClient).sort({ createdAt: -1 }).skip(skip).limit(limit),
     Project.countDocuments(filter),
   ]);
+  const data = await withProposalCounts(rows);
   res.json(paginateResult({ data, total, page, limit }));
 });
 
@@ -109,6 +110,20 @@ const getProject = asyncHandler(async (req, res) => {
     myProposal = await Proposal.findOne({ projectId: project._id, freelancerId: req.user._id });
   }
   res.json({ project, myProposal });
+});
+
+const similarProjects = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) throw new ApiError(404, 'Project not found');
+  const data = await Project.find({
+    _id: { $ne: project._id },
+    status: 'open',
+    $or: [{ category: project.category }, { skills: { $in: project.skills || [] } }],
+  })
+    .populate(populateClient)
+    .sort({ createdAt: -1 })
+    .limit(4);
+  res.json({ data });
 });
 
 const createProject = asyncHandler(async (req, res) => {
@@ -235,9 +250,25 @@ const inviteToBid = asyncHandler(async (req, res) => {
   res.status(201).json({ project, invited: true });
 });
 
+async function withProposalCounts(projects) {
+  const ids = projects.map((p) => p._id);
+  if (!ids.length) return projects;
+  const rows = await Proposal.aggregate([
+    { $match: { projectId: { $in: ids }, status: 'pending' } },
+    { $group: { _id: '$projectId', count: { $sum: 1 } } },
+  ]);
+  const counts = Object.fromEntries(rows.map((r) => [String(r._id), r.count]));
+  return projects.map((p) => {
+    const obj = p.toObject ? p.toObject() : p;
+    obj.proposalCount = counts[String(p._id)] || 0;
+    return obj;
+  });
+}
+
 module.exports = {
   listProjects,
   getProject,
+  similarProjects,
   createProject,
   updateProject,
   cancelProject,
