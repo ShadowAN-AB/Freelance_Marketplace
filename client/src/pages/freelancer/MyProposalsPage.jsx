@@ -22,7 +22,7 @@ export default function MyProposalsPage() {
       {!list.length ? <div className="mt-8"><EmptyState title="No proposals yet" body="Browse open projects and send a bid." action={<Link to="/projects" className="text-teal">Browse projects</Link>} /></div> : null}
       <ul className="mt-6 space-y-3">
         {list.map((p) => (
-          <li key={p._id} className="rounded-xl border border-line bg-white p-4">
+          <li key={p._id} className="rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div className="flex justify-between gap-3">
               <Link to={`/projects/${p.projectId?._id}`} className="font-display text-2xl">{p.projectId?.title}</Link>
               <StatusBadge status={p.status} />

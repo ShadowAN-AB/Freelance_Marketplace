@@ -18,7 +18,7 @@ export default function AdminReportsPage() {
       <h1 className="font-display text-4xl">Reports</h1>
       <ul className="mt-6 space-y-3">
         {(data?.data || []).map((r) => (
-          <li key={r._id} className="rounded-xl border border-line bg-white p-4">
+          <li key={r._id} className="rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div className="flex justify-between">
               <p className="font-semibold">{r.reason} · {r.targetType}</p>
               <StatusBadge status={r.status} />

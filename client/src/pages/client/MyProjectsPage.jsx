@@ -20,12 +20,12 @@ export default function MyProjectsPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-4xl">My projects</h1>
-        <Link to="/app/projects/new" className="rounded-md bg-teal px-4 py-2 font-semibold text-paper">New</Link>
+        <Link to="/app/projects/new" className="rounded-full bg-coral px-4 py-2 font-bold text-white shadow-[0_5px_0_#c4321c]">New</Link>
       </div>
       {!list.length ? <div className="mt-8"><EmptyState title="No projects yet" body="Post a brief to start receiving proposals." action={<Link to="/app/projects/new" className="text-teal">Post a project</Link>} /></div> : null}
       <ul className="mt-6 space-y-3">
         {list.map((p) => (
-          <li key={p._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white p-4">
+          <li key={p._id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div>
               <Link to={`/projects/${p._id}`} className="font-display text-2xl">{p.title}</Link>
               <p className="text-sm text-muted">{inr(p.budgetMin)} – {inr(p.budgetMax)}</p>

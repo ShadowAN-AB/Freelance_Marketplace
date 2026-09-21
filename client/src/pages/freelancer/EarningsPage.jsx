@@ -13,19 +13,19 @@ export default function EarningsPage() {
     <div>
       <h1 className="font-display text-4xl">Earnings</h1>
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-line bg-white p-5">
-          <p className="text-xs uppercase tracking-[0.16em] text-muted">Released</p>
+        <div className="rounded-3xl bg-gradient-to-br from-teal to-teal-2 p-5 text-white shadow-[6px_6px_0_rgba(28,18,8,0.12)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-80">Released</p>
           <p className="font-display mt-2 text-4xl">{inr(data?.totalReleased)}</p>
         </div>
-        <div className="rounded-xl border border-line bg-white p-5">
-          <p className="text-xs uppercase tracking-[0.16em] text-muted">Held in escrow</p>
+        <div className="rounded-3xl bg-gradient-to-br from-saffron to-[#ffd56a] p-5 text-ink shadow-[6px_6px_0_rgba(28,18,8,0.12)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-80">Held in escrow</p>
           <p className="font-display mt-2 text-4xl">{inr(data?.totalHeld)}</p>
         </div>
       </div>
       {!data?.data?.length ? <div className="mt-8"><EmptyState title="No ledger yet" body="Accepted work appears here as held, then released." /></div> : null}
       <ul className="mt-6 space-y-3">
         {(data?.data || []).map((p) => (
-          <li key={p._id} className="flex items-center justify-between rounded-xl border border-line bg-white p-4">
+          <li key={p._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div>
               <p className="font-semibold">{p.contractId?.projectId?.title || 'Contract'}</p>
               <p className="text-sm text-muted">{inr(p.amount)}</p>

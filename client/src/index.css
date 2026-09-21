@@ -3,15 +3,17 @@
 @theme {
   --font-display: "Fraunces", Georgia, serif;
   --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
-  --color-paper: #f3eee4;
-  --color-paper-2: #e8e0d0;
-  --color-ink: #1b1814;
-  --color-muted: #5c564c;
-  --color-line: #d4cbb8;
-  --color-teal: #0f5c57;
-  --color-teal-2: #147a73;
-  --color-gold: #9a6700;
-  --color-danger: #9b2c2c;
+  --color-paper: #f2f6f4;
+  --color-paper-2: #d4ebe4;
+  --color-ink: #12211e;
+  --color-muted: #4d635c;
+  --color-line: #c3d8d1;
+  --color-teal: #00856f;
+  --color-teal-2: #00b894;
+  --color-coral: #ff4d2e;
+  --color-saffron: #ffb703;
+  --color-gold: #e09a00;
+  --color-danger: #d7263d;
 }
 
 html,
@@ -22,9 +24,12 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  background:
+    radial-gradient(880px 380px at 108% -8%, rgba(255, 77, 46, 0.14), transparent 52%),
+    radial-gradient(760px 420px at -12% 8%, rgba(0, 184, 148, 0.22), transparent 55%),
+    var(--color-paper);
 }
 
 h1,
@@ -32,7 +37,7 @@ h2,
 h3,
 .font-display {
   font-family: var(--font-display);
-  font-weight: 560;
+  font-weight: 600;
   letter-spacing: -0.03em;
 }
 
@@ -41,4 +46,8 @@ textarea,
 select,
 button {
   font: inherit;
+}
+
+a {
+  color: inherit;
 }

@@ -14,7 +14,7 @@ export default function AdminProjectsPage() {
       <h1 className="font-display text-4xl">Projects</h1>
       <ul className="mt-6 space-y-2">
         {(data?.data || []).map((p) => (
-          <li key={p._id} className="flex items-center justify-between rounded-xl border border-line bg-white p-4">
+          <li key={p._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
             <Link to={`/projects/${p._id}`} className="font-semibold">{p.title}</Link>
             <StatusBadge status={p.status} />
           </li>

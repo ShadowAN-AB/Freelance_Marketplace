@@ -23,7 +23,7 @@ export default function AdminUsersPage() {
       </div>
       <ul className="mt-6 space-y-2">
         {(data?.data || []).map((u) => (
-          <li key={u._id} className="flex items-center justify-between rounded-xl border border-line bg-white p-4">
+          <li key={u._id} className="flex items-center justify-between rounded-2xl border-2 border-ink/10 bg-white p-4">
             <div>
               <p className="font-semibold">{u.name} · {u.role}</p>
               <p className="text-sm text-muted">{u.email}</p>

@@ -22,7 +22,7 @@ export default function BrowseProjectsPage() {
         <h1 className="font-display text-4xl">Open projects</h1>
         <div className="mt-6 grid gap-3 md:grid-cols-3">
           <Input placeholder="Search title or brief" value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }} />
-          <select className="rounded-md border border-line bg-white px-3 py-2" value={category} onChange={(e) => { setCategory(e.target.value); setPage(1) }}>
+          <select className="rounded-xl border-2 border-line bg-white px-3 py-2.5" value={category} onChange={(e) => { setCategory(e.target.value); setPage(1) }}>
             <option value="">All categories</option>
             {CATEGORIES.map((c) => (
               <option key={c}>{c}</option>

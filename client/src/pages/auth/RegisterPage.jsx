@@ -31,6 +31,7 @@ export default function RegisterPage() {
   return (
     <PublicLayout>
       <div className="mx-auto max-w-md px-4 py-16">
+        <div className="rounded-3xl border-2 border-ink/10 bg-white p-8 shadow-[10px_10px_0_rgba(0,133,111,0.25)]">
         <h1 className="font-display text-4xl">Join FreelanceHub</h1>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <ErrorText error={error} />
@@ -45,7 +46,7 @@ export default function RegisterPage() {
           </Field>
           <Field label="I am a">
             <select
-              className="w-full rounded-md border border-line bg-white px-3 py-2"
+              className="w-full rounded-xl border-2 border-line bg-white px-3 py-2.5"
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
             >
@@ -55,9 +56,10 @@ export default function RegisterPage() {
           </Field>
           <Button disabled={busy}>{busy ? 'Creating…' : 'Create account'}</Button>
         </form>
-        <p className="mt-6 text-sm">
-          Already have an account? <Link to="/login" className="text-teal">Log in</Link>
+        <p className="mt-6 text-sm font-semibold">
+          Already have an account? <Link to="/login" className="text-coral">Log in</Link>
         </p>
+        </div>
       </div>
     </PublicLayout>
   )

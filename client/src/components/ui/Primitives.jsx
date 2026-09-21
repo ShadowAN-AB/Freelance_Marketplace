@@ -1,12 +1,13 @@
 export function Button({ children, variant = 'primary', className = '', ...props }) {
   const styles = {
-    primary: 'bg-teal text-paper hover:bg-teal-2',
-    ghost: 'border border-line bg-transparent hover:bg-paper-2',
+    primary:
+      'bg-coral text-white shadow-[0_8px_0_#c4321c] hover:-translate-y-0.5 hover:bg-[#ff6a50] active:translate-y-0 active:shadow-[0_4px_0_#c4321c]',
+    ghost: 'border-2 border-ink bg-white hover:bg-saffron',
     danger: 'bg-danger text-white hover:opacity-90',
   }
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-md px-4 py-2 text-[15px] font-semibold disabled:opacity-50 ${styles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-[15px] font-bold transition disabled:opacity-50 ${styles[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -17,7 +18,7 @@ export function Button({ children, variant = 'primary', className = '', ...props
 export function Field({ label, children }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-semibold text-muted">{label}</span>
+      <span className="text-sm font-bold text-muted">{label}</span>
       {children}
     </label>
   )
@@ -26,7 +27,7 @@ export function Field({ label, children }) {
 export function Input({ className = '', ...props }) {
   return (
     <input
-      className={`w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-teal ${className}`}
+      className={`w-full rounded-xl border-2 border-line bg-white px-3 py-2.5 outline-none focus:border-teal ${className}`}
       {...props}
     />
   )
@@ -35,7 +36,7 @@ export function Input({ className = '', ...props }) {
 export function Textarea({ className = '', ...props }) {
   return (
     <textarea
-      className={`w-full rounded-md border border-line bg-white px-3 py-2 outline-none focus:border-teal ${className}`}
+      className={`w-full rounded-xl border-2 border-line bg-white px-3 py-2.5 outline-none focus:border-teal ${className}`}
       {...props}
     />
   )
@@ -44,12 +45,12 @@ export function Textarea({ className = '', ...props }) {
 export function Badge({ children, tone = 'default' }) {
   const tones = {
     default: 'bg-paper-2 text-ink',
-    teal: 'bg-teal/10 text-teal',
-    gold: 'bg-gold/15 text-gold',
-    danger: 'bg-danger/10 text-danger',
+    teal: 'bg-teal text-white',
+    gold: 'bg-saffron text-ink',
+    danger: 'bg-coral text-white',
   }
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${tones[tone]}`}>
+    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold capitalize ${tones[tone]}`}>
       {children}
     </span>
   )
@@ -67,7 +68,7 @@ export function StatusBadge({ status }) {
 
 export function EmptyState({ title, body, action }) {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-white/60 p-10 text-center">
+    <div className="rounded-3xl border-2 border-dashed border-coral/40 bg-white/80 p-10 text-center">
       <h3 className="font-display text-2xl">{title}</h3>
       <p className="mt-2 text-muted">{body}</p>
       {action ? <div className="mt-4">{action}</div> : null}
@@ -76,18 +77,18 @@ export function EmptyState({ title, body, action }) {
 }
 
 export function Spinner() {
-  return <p className="p-8 text-muted">Loading…</p>
+  return <p className="p-8 font-semibold text-teal">Loading…</p>
 }
 
 export function ErrorText({ error }) {
   if (!error) return null
-  return <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+  return <p className="rounded-xl bg-coral/15 px-3 py-2 text-sm font-semibold text-danger">{error}</p>
 }
 
 export function Avatar({ user, size = 'md' }) {
   const dim = size === 'lg' ? 'h-16 w-16 text-xl' : size === 'sm' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm'
   if (user?.avatarUrl) {
-    return <img src={user.avatarUrl} alt="" className={`${dim} rounded-full object-cover`} />
+    return <img src={user.avatarUrl} alt="" className={`${dim} rounded-full object-cover ring-2 ring-saffron`} />
   }
   const letters = (user?.name || '?')
     .split(' ')
@@ -96,8 +97,22 @@ export function Avatar({ user, size = 'md' }) {
     .join('')
     .toUpperCase()
   return (
-    <span className={`${dim} inline-flex items-center justify-center rounded-full bg-teal text-paper font-semibold`}>
+    <span className={`${dim} inline-flex items-center justify-center rounded-full bg-gradient-to-br from-teal to-teal-2 text-white font-bold`}>
       {letters}
+    </span>
+  )
+}
+
+const CATEGORY_TONES = [
+  'bg-teal/15 text-teal',
+  'bg-coral/15 text-coral',
+  'bg-saffron/40 text-ink',
+]
+
+export function SkillChip({ children, index = 0 }) {
+  return (
+    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${CATEGORY_TONES[index % CATEGORY_TONES.length]}`}>
+      {children}
     </span>
   )
 }
