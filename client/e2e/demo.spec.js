@@ -2,16 +2,16 @@ import { test, expect } from '@playwright/test'
 
 test.setTimeout(60000)
 
-test('public viva surfaces', async ({ page }) => {
+test('public marketplace surfaces', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: /Find the right person/i })).toBeVisible()
-  await expect(page.getByText('Five-minute viva beat')).toBeVisible()
-  await expect(page.getByText('priya@freelancehub.dev')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Built for both sides of the desk/i })).toBeVisible()
 
   await page.goto('/login')
-  await page.getByRole('button', { name: 'Priya · client' }).click()
-  await expect(page.getByLabel('Email')).toHaveValue('priya@freelancehub.dev')
-  await expect(page.getByLabel('Password')).toHaveValue('Password123!')
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Priya · client' })).toHaveCount(0)
+  await page.getByLabel('Email').fill('priya@freelancehub.dev')
+  await page.getByLabel('Password').fill('Password123!')
 
   await page.goto('/projects')
   await expect(page.getByRole('heading', { name: 'Open projects' })).toBeVisible()
@@ -24,7 +24,8 @@ test('public viva surfaces', async ({ page }) => {
 
 test('Priya dashboard shows Scan MVP ready to release', async ({ page }) => {
   await page.goto('/login')
-  await page.getByRole('button', { name: 'Priya · client' }).click()
+  await page.getByLabel('Email').fill('priya@freelancehub.dev')
+  await page.getByLabel('Password').fill('Password123!')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await page.waitForURL(/\/app\//)
   await expect(page.getByRole('heading', { name: 'Your hiring desk' })).toBeVisible()

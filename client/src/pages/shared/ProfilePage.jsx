@@ -145,7 +145,7 @@ function ProfileMeter({ user }) {
         <div className="h-full bg-teal" style={{ width: `${percent}%` }} />
       </div>
       <p className="mt-2 text-sm text-muted">
-        {percent === 100 ? 'Ready for the viva — examiners can open your public page.' : 'Add a bio, location, avatar, and role details to look hireable.'}
+        {percent === 100 ? 'Your public profile is complete.' : 'Add a bio, location, avatar, and role details so clients can assess the fit.'}
       </p>
     </div>
   )

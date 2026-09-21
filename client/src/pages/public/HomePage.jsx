@@ -23,7 +23,7 @@ export default function HomePage() {
           <span className="text-coral">Pay when it is done.</span>
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted">
-          FreelanceHub is a marketplace for clients and independent talent. Post a project, review proposals, chat in the open, and release simulated escrow when the job is complete.
+          FreelanceHub is a marketplace for clients and independent talent. Post a project, review proposals, chat on the job, and release escrow when the work is complete.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link to="/register">
@@ -33,7 +33,7 @@ export default function HomePage() {
             <Button variant="ghost">Browse open projects</Button>
           </Link>
           <Link to="/login">
-            <Button variant="ghost">Viva demo login</Button>
+            <Button variant="ghost">Sign in</Button>
           </Link>
         </div>
         <dl className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -48,7 +48,7 @@ export default function HomePage() {
           {[
             ['01', 'Post with a budget', 'Clients describe the work, skills, and a rupee range. Split a fixed job into 2–3 milestones, or cap an hourly desk.', 'bg-teal text-white'],
             ['02', 'Propose once', 'Freelancers send one bid per project. Clients hire. Everyone else is released.', 'bg-coral text-white'],
-            ['03', 'Hold, then release', 'Funds sit in simulated escrow. Release the whole job, one milestone, or approved hours.', 'bg-saffron text-ink'],
+            ['03', 'Hold, then release', 'Funds sit in escrow. Release the whole job, one milestone, or approved hours.', 'bg-saffron text-ink'],
           ].map(([n, title, body, tone]) => (
             <div key={n} className={`rounded-3xl p-6 shadow-[8px_8px_0_rgba(28,18,8,0.15)] ${tone}`}>
               <p className="text-xs font-bold tracking-[0.2em] opacity-80">{n}</p>
@@ -59,16 +59,14 @@ export default function HomePage() {
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <h2 className="font-display text-4xl">Five-minute viva beat</h2>
-        <p className="mt-2 max-w-2xl text-muted">
-          Password for every seeded account is <code className="rounded-md bg-saffron px-1.5 py-0.5 font-bold">Password123!</code>
-        </p>
+        <h2 className="font-display text-4xl">Built for both sides of the desk</h2>
+        <p className="mt-2 max-w-2xl text-muted">One place to post work, hire, and get paid — without a noisy social feed.</p>
         <ol className="mt-6 grid gap-4 md:grid-cols-2">
           {[
-            ['Priya (client)', 'priya@freelancehub.dev — Active work: release Scan MVP, then approve 4h on the hourly desk.'],
-            ['Aisha (talent)', 'aisha@freelancehub.dev — pending bid on the logistics dashboard plus the inventory contract.'],
-            ['Arjun (client)', 'arjun@freelancehub.dev — completed SEO job with a review already on file.'],
-            ['Admin', 'admin@freelancehub.dev — contracts, escrow column, reports, and the audit log.'],
+            ['Clients', 'Post a brief with a budget, compare proposals, hold funds in escrow, and release when a slice or the full job is done.'],
+            ['Freelancers', 'Bid once per listing, message the client after you apply, submit deliverables, and track held versus released earnings.'],
+            ['Scoped work', 'Split a fixed job into milestones, or cap an hourly contract. Remaining escrow refunds if either side cancels.'],
+            ['Trust and ops', 'Reviews after completion, reports, and an admin audit trail for disputes and blocked accounts.'],
           ].map(([title, body]) => (
             <li key={title} className="rounded-3xl border-2 border-ink/10 bg-white p-5">
               <p className="font-display text-2xl">{title}</p>

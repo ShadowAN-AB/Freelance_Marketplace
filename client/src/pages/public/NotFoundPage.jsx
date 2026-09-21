@@ -8,7 +8,7 @@ export default function NotFoundPage() {
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-coral">404</p>
         <h1 className="font-display mt-3 text-5xl">Page not found</h1>
-        <p className="mt-4 text-muted">That URL is not a FreelanceHub screen. Head back to open projects or the viva login.</p>
+        <p className="mt-4 text-muted">That page is not on FreelanceHub. Head back to open projects or sign in.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link to="/">
             <Button>Home</Button>
@@ -17,7 +17,7 @@ export default function NotFoundPage() {
             <Button variant="ghost">Browse projects</Button>
           </Link>
           <Link to="/login">
-            <Button variant="ghost">Demo login</Button>
+            <Button variant="ghost">Sign in</Button>
           </Link>
         </div>
       </div>

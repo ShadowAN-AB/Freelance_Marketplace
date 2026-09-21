@@ -44,10 +44,7 @@ export function PublicLayout({ children }) {
       <PublicNav />
       {children}
       <footer className="border-t-2 border-ink/10 px-4 py-8 text-center text-sm text-muted">
-        FreelanceHub demo · password <span className="font-bold text-ink">Password123!</span> ·{' '}
-        <Link to="/login" className="font-semibold text-teal">
-          viva logins
-        </Link>
+        © {new Date().getFullYear()} FreelanceHub. Hire with a clear brief, chat in the open, and release escrow when the work is done.
       </footer>
     </div>
   )

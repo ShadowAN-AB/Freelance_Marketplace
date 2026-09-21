@@ -32,7 +32,8 @@ export default function RegisterPage() {
     <PublicLayout>
       <div className="mx-auto max-w-md px-4 py-16">
         <div className="rounded-3xl border-2 border-ink/10 bg-white p-8 shadow-[10px_10px_0_rgba(0,133,111,0.25)]">
-        <h1 className="font-display text-4xl">Join FreelanceHub</h1>
+        <h1 className="font-display text-4xl">Create an account</h1>
+        <p className="mt-2 text-muted">Join as a client to hire, or as a freelancer to bid on open work.</p>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <ErrorText error={error} />
           <Field label="Full name">
