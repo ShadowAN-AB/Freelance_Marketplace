@@ -7,10 +7,10 @@ const {
   markRead,
   unreadCount,
   openSchema,
-} = require('../controllers/chatController');
-const { protect, requireVerified } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
-const { uploadDeliverables } = require('../middleware/upload');
+} = require('./controller');
+const { protect, requireVerified } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
+const { uploadDeliverables } = require('../../middleware/upload');
 
 const router = express.Router();
 router.get('/', protect, listConversations);

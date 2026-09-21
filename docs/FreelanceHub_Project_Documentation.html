@@ -316,14 +316,17 @@
 │   ├── Dockerfile          nginx + /api proxy
 │   └── vite.config.js      Proxies → :5001 · Vitest
 ├── server/
-│   ├── src/server.js       createApp() + start(); health checks Mongo
+│   ├── src/app.js          Express factory (createApp)
+│   ├── src/server.js       Listen; SERVICE=all locally
+│   ├── src/gateway.js      Compose reverse proxy
+│   ├── src/modules/        Domain folders: auth, users, projects, proposals, contracts, payments, chat, notifications, admin, stats
 │   ├── src/models/         Including AuditLog
-│   ├── src/controllers/    Route handlers
-│   ├── src/routes/         Express routers
 │   ├── src/middleware/     JWT/cookies, Zod, Multer
-│   ├── src/services/       socket, mailer, storage, payments, audit, logger
+│   ├── src/infra/          socket, mailer, storage, payments, matching, audit, logger
+│   ├── src/common/         errors, JWT helpers, pagination, skill score
+│   ├── src/config/         env + Mongo
 │   ├── src/seeds/seed.js   Demo data (refuses NODE_ENV=production)
-│   ├── test/api.test.js    Hire-loop supertest suite
+│   ├── test/               Hire-loop + matching + gateway routing
 │   └── uploads/            Local files when S3 is unset
 ├── .github/workflows/ci.yml
 ├── docker-compose.yml      mongo + api + web

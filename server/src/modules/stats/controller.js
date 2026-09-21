@@ -1,8 +1,8 @@
-const Project = require('../models/Project');
-const User = require('../models/User');
-const Contract = require('../models/Contract');
-const Payment = require('../models/Payment');
-const { asyncHandler } = require('../utils/asyncHandler');
+const Project = require('../../models/Project');
+const User = require('../../models/User');
+const Contract = require('../../models/Contract');
+const Payment = require('../../models/Payment');
+const { asyncHandler } = require('../../common/asyncHandler');
 
 const marketplaceStats = asyncHandler(async (_req, res) => {
   const [openProjects, freelancers, completedContracts, held] = await Promise.all([

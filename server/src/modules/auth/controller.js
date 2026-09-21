@@ -1,8 +1,8 @@
 const { z } = require('zod');
 const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
+const User = require('../../models/User');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
 const {
   signToken,
   signRefreshToken,
@@ -11,11 +11,11 @@ const {
   hashToken,
   setAuthCookies,
   clearAuthCookies,
-} = require('../utils/tokens');
-const { publicUser } = require('../utils/publicUser');
-const { sendMail } = require('../services/mailer');
-const { clientUrl } = require('../config/env');
-const { audit } = require('../services/audit');
+} = require('../../common/tokens');
+const { publicUser } = require('../../common/publicUser');
+const { sendMail } = require('../../infra/mailer');
+const { clientUrl } = require('../../config/env');
+const { audit } = require('../../infra/audit');
 
 const registerSchema = z.object({
   body: z.object({

@@ -1,5 +1,5 @@
 const express = require('express');
-const { listFreelancers } = require('../controllers/userController');
+const { listFreelancers } = require('./controller');
 
 const router = express.Router();
 router.get('/', listFreelancers);

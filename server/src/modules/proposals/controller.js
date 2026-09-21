@@ -1,15 +1,15 @@
 const { z } = require('zod');
-const Proposal = require('../models/Proposal');
-const Project = require('../models/Project');
-const Contract = require('../models/Contract');
-const Payment = require('../models/Payment');
-const Conversation = require('../models/Conversation');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { notify } = require('../services/notify');
-const { sendMail } = require('../services/mailer');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
-const { stripeEnabled } = require('../services/payments');
+const Proposal = require('../../models/Proposal');
+const Project = require('../../models/Project');
+const Contract = require('../../models/Contract');
+const Payment = require('../../models/Payment');
+const Conversation = require('../../models/Conversation');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { notify } = require('../../infra/notify');
+const { sendMail } = require('../../infra/mailer');
+const { USER_PUBLIC_FIELDS } = require('../../common/publicUser');
+const { stripeEnabled } = require('../../infra/payments');
 
 const createSchema = z.object({
   body: z.object({
@@ -54,7 +54,7 @@ const createProposal = asyncHandler(async (req, res) => {
     body: `${req.user.name} proposed ₹${req.body.bidAmount.toLocaleString('en-IN')} on ${project.title}`,
     link: `/app/projects/${project._id}/proposals`,
   });
-  const client = await require('../models/User').findById(project.clientId).select('email name');
+  const client = await require('../../models/User').findById(project.clientId).select('email name');
   if (client?.email) {
     await sendMail({
       to: client.email,
@@ -100,7 +100,7 @@ const acceptProposal = asyncHandler(async (req, res) => {
     { status: 'rejected' }
   );
 
-  const freelancer = await require('../models/User').findById(proposal.freelancerId);
+  const freelancer = await require('../../models/User').findById(proposal.freelancerId);
   const pricingType = project.pricingType || 'fixed';
   const hourlyRate = pricingType === 'hourly' ? Number(freelancer?.freelancerProfile?.hourlyRate || 0) : 0;
   const amount = pricingType === 'hourly' ? project.budgetMax : proposal.bidAmount;
@@ -167,7 +167,7 @@ const acceptProposal = asyncHandler(async (req, res) => {
     body: `You were hired for ${project.title}`,
     link: `/app/work/${contract._id}`,
   });
-  const hired = await require('../models/User').findById(proposal.freelancerId).select('email');
+  const hired = await require('../../models/User').findById(proposal.freelancerId).select('email');
   if (hired?.email) {
     await sendMail({
       to: hired.email,

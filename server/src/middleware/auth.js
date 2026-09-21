@@ -1,7 +1,7 @@
 const User = require('../models/User');
-const { verifyToken, readAccessToken } = require('../utils/tokens');
-const { ApiError } = require('../utils/apiError');
-const { asyncHandler } = require('../utils/asyncHandler');
+const { verifyToken, readAccessToken } = require('../common/tokens');
+const { ApiError } = require('../common/apiError');
+const { asyncHandler } = require('../common/asyncHandler');
 
 const protect = asyncHandler(async (req, _res, next) => {
   const token = readAccessToken(req);

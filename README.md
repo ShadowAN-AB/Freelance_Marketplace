@@ -100,7 +100,15 @@ Password for every seeded account: `Password123!`
 
 ```
 client/   React app
-server/   Express API (SERVICE=all locally) + gateway.js for compose
+server/
+  src/app.js          Express app factory
+  src/server.js       Process entry (SERVICE=all locally)
+  src/gateway.js      Compose reverse proxy
+  src/modules/        Domain routes + controllers (auth, projects, chat, …)
+  src/models/         Mongoose schemas
+  src/infra/          Mail, storage, sockets, matching, payments
+  src/common/         Errors, JWT, pagination, skill score
+  src/config/         Env and Mongo
 docs/     HTML + PDF project documentation
 docker-compose.yml   Mongo + auth + marketplace + realtime + gateway + web
 ```

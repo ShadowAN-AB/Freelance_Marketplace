@@ -11,9 +11,9 @@ const {
   updateReport,
   updateReportSchema,
   verifySkillsSchema,
-} = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
+} = require('./controller');
+const { protect, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
 const { z } = require('zod');
 
 const blockSchema = z.object({

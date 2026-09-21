@@ -1,13 +1,13 @@
 const { z } = require('zod');
 const mongoose = require('mongoose');
-const User = require('../models/User');
-const Project = require('../models/Project');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { persistUpload } = require('../services/storage');
-const { publicUser, USER_PUBLIC_FIELDS } = require('../utils/publicUser');
-const { paginateQuery, paginateResult } = require('../utils/paginate');
-const { normalizeSkills } = require('../utils/skills');
+const User = require('../../models/User');
+const Project = require('../../models/Project');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { persistUpload } = require('../../infra/storage');
+const { publicUser, USER_PUBLIC_FIELDS } = require('../../common/publicUser');
+const { paginateQuery, paginateResult } = require('../../common/paginate');
+const { normalizeSkills } = require('../../common/skills');
 
 function assertObjectId(id) {
   if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, 'Invalid id');

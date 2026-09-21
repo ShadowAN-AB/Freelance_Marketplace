@@ -1,7 +1,7 @@
-const { asyncHandler } = require('../utils/asyncHandler');
-const { logger } = require('../services/logger');
-const { stripeEnabled, getStripe } = require('../services/payments');
-const Payment = require('../models/Payment');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { logger } = require('../../infra/logger');
+const { stripeEnabled, getStripe } = require('../../infra/payments');
+const Payment = require('../../models/Payment');
 
 const myCheckoutMode = asyncHandler(async (_req, res) => {
   res.json({

@@ -1,5 +1,5 @@
 const express = require('express');
-const { listUserReviews } = require('../controllers/contractController');
+const { listUserReviews } = require('./controller');
 
 const router = express.Router({ mergeParams: true });
 router.get('/', listUserReviews);

@@ -1,14 +1,14 @@
 const { z } = require('zod');
-const Conversation = require('../models/Conversation');
-const Message = require('../models/Message');
-const Proposal = require('../models/Proposal');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { notify } = require('../services/notify');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
-const { isOnline } = require('../services/socket');
-const { persistUpload } = require('../services/storage');
-const { paginateQuery, paginateResult } = require('../utils/paginate');
+const Conversation = require('../../models/Conversation');
+const Message = require('../../models/Message');
+const Proposal = require('../../models/Proposal');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { notify } = require('../../infra/notify');
+const { USER_PUBLIC_FIELDS } = require('../../common/publicUser');
+const { isOnline } = require('../../infra/socket');
+const { persistUpload } = require('../../infra/storage');
+const { paginateQuery, paginateResult } = require('../../common/paginate');
 
 const openSchema = z.object({
   body: z.object({

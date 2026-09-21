@@ -16,9 +16,9 @@ const {
   passwordSchema,
   forgotSchema,
   resetSchema,
-} = require('../controllers/authController');
-const { validate } = require('../middleware/validate');
-const { protect, optionalAuth } = require('../middleware/auth');
+} = require('./controller');
+const { validate } = require('../../middleware/validate');
+const { protect, optionalAuth } = require('../../middleware/auth');
 
 const router = express.Router();
 

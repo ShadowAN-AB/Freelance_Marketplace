@@ -1,17 +1,17 @@
 const { z } = require('zod');
-const User = require('../models/User');
-const Project = require('../models/Project');
-const Proposal = require('../models/Proposal');
-const Contract = require('../models/Contract');
-const Payment = require('../models/Payment');
-const Report = require('../models/Report');
-const AuditLog = require('../models/AuditLog');
-const { audit } = require('../services/audit');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { notify } = require('../services/notify');
-const { paginateQuery, paginateResult } = require('../utils/paginate');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const User = require('../../models/User');
+const Project = require('../../models/Project');
+const Proposal = require('../../models/Proposal');
+const Contract = require('../../models/Contract');
+const Payment = require('../../models/Payment');
+const Report = require('../../models/Report');
+const AuditLog = require('../../models/AuditLog');
+const { audit } = require('../../infra/audit');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { notify } = require('../../infra/notify');
+const { paginateQuery, paginateResult } = require('../../common/paginate');
+const { USER_PUBLIC_FIELDS } = require('../../common/publicUser');
 
 const stats = asyncHandler(async (_req, res) => {
   const [users, projects, proposals, contracts, payments, reports] = await Promise.all([

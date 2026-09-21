@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { pickBackend } = require('../src/services/gatewayRoute');
+const { pickBackend } = require('../src/infra/gatewayRoute');
 
 describe('gateway routing', () => {
   it('sends auth, reviews, chat, and everything else to the right service', () => {

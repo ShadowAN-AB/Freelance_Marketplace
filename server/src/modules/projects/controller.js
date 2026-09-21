@@ -1,14 +1,14 @@
 const { z } = require('zod');
-const Project = require('../models/Project');
-const User = require('../models/User');
-const Proposal = require('../models/Proposal');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { paginateQuery, paginateResult } = require('../utils/paginate');
-const { normalizeSkills, matchScore } = require('../utils/skills');
-const { notify } = require('../services/notify');
-const { decorateFreelancers, decorateProjects } = require('../services/matching');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const Project = require('../../models/Project');
+const User = require('../../models/User');
+const Proposal = require('../../models/Proposal');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { paginateQuery, paginateResult } = require('../../common/paginate');
+const { normalizeSkills, matchScore } = require('../../common/skills');
+const { notify } = require('../../infra/notify');
+const { decorateFreelancers, decorateProjects } = require('../../infra/matching');
+const { USER_PUBLIC_FIELDS } = require('../../common/publicUser');
 
 const CATEGORIES = [
   'Web Development',

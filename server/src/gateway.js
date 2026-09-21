@@ -1,8 +1,8 @@
 const http = require('http');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { pickBackend } = require('./services/gatewayRoute');
-const { logger } = require('./services/logger');
+const { pickBackend } = require('./infra/gatewayRoute');
+const { logger } = require('./infra/logger');
 
 function requiredUrl(name) {
   const value = process.env[name];

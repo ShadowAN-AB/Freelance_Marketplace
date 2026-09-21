@@ -4,7 +4,7 @@ const User = require('../models/User');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { notify } = require('./notify');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
+const { USER_PUBLIC_FIELDS } = require('../common/publicUser');
 const { clientUrl } = require('../config/env');
 const { logger } = require('./logger');
 

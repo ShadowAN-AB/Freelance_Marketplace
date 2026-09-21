@@ -1,7 +1,7 @@
 const express = require('express');
-const { myPayments, myPaymentsCsv } = require('../controllers/contractController');
-const { myCheckoutMode } = require('../controllers/paymentController');
-const { protect, authorize } = require('../middleware/auth');
+const { myPayments, myPaymentsCsv } = require('../contracts/controller');
+const { myCheckoutMode } = require('./controller');
+const { protect, authorize } = require('../../middleware/auth');
 
 const router = express.Router();
 router.get('/me.csv', protect, authorize('client', 'freelancer'), myPaymentsCsv);

@@ -2,7 +2,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { freelancerRationale, llmConfig } = require('../src/services/matching');
+const { freelancerRationale, llmConfig } = require('../src/infra/matching');
 
 describe('LLM matching fallback', () => {
   it('writes a skill-overlap rationale without calling a model', () => {

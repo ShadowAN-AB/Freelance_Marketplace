@@ -1,6 +1,6 @@
-const Notification = require('../models/Notification');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
+const Notification = require('../../models/Notification');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
 
 const TYPE_GROUPS = {
   hire: ['proposal_received', 'proposal_accepted', 'proposal_rejected', 'project_invite'],

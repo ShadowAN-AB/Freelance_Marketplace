@@ -1,6 +1,6 @@
 const path = require('path');
 const multer = require('multer');
-const { ApiError } = require('../utils/apiError');
+const { ApiError } = require('../common/apiError');
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, path.join(__dirname, '../../uploads')),

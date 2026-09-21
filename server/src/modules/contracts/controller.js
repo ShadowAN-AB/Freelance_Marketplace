@@ -1,17 +1,17 @@
 const { z } = require('zod');
-const Contract = require('../models/Contract');
-const Payment = require('../models/Payment');
-const Project = require('../models/Project');
-const Review = require('../models/Review');
-const User = require('../models/User');
-const { asyncHandler } = require('../utils/asyncHandler');
-const { ApiError } = require('../utils/apiError');
-const { notify } = require('../services/notify');
-const { sendMail } = require('../services/mailer');
-const { persistUploads } = require('../services/storage');
-const { markReleased, markRefunded, releasePartial } = require('../services/payments');
-const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
-const { paginateQuery, paginateResult } = require('../utils/paginate');
+const Contract = require('../../models/Contract');
+const Payment = require('../../models/Payment');
+const Project = require('../../models/Project');
+const Review = require('../../models/Review');
+const User = require('../../models/User');
+const { asyncHandler } = require('../../common/asyncHandler');
+const { ApiError } = require('../../common/apiError');
+const { notify } = require('../../infra/notify');
+const { sendMail } = require('../../infra/mailer');
+const { persistUploads } = require('../../infra/storage');
+const { markReleased, markRefunded, releasePartial } = require('../../infra/payments');
+const { USER_PUBLIC_FIELDS } = require('../../common/publicUser');
+const { paginateQuery, paginateResult } = require('../../common/paginate');
 
 const populate = [
   { path: 'projectId' },

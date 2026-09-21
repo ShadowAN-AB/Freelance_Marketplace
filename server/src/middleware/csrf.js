@@ -1,4 +1,4 @@
-const { ApiError } = require('../utils/apiError');
+const { ApiError } = require('../common/apiError');
 
 const SKIP_PATHS = new Set([
   '/api/payments/webhook',

@@ -8,9 +8,9 @@ const {
   withdrawProposal,
   toggleShortlist,
   createSchema,
-} = require('../controllers/proposalController');
-const { protect, authorize, requireVerified } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
+} = require('./controller');
+const { protect, authorize, requireVerified } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
 
 const projectRouter = express.Router({ mergeParams: true });
 projectRouter.post('/', protect, authorize('freelancer'), requireVerified, validate(createSchema), createProposal);

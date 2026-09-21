@@ -13,10 +13,10 @@ const {
   addSavedSearch,
   deleteSavedSearch,
   savedSearchSchema,
-} = require('../controllers/userController');
-const { protect, authorize } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
-const { upload } = require('../middleware/upload');
+} = require('./controller');
+const { protect, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
+const { upload } = require('../../middleware/upload');
 
 const router = express.Router();
 

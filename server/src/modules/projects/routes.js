@@ -13,9 +13,9 @@ const {
   createSchema,
   updateSchema,
   inviteSchema,
-} = require('../controllers/projectController');
-const { protect, authorize, optionalAuth, requireVerified } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
+} = require('./controller');
+const { protect, authorize, optionalAuth, requireVerified } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
 
 const router = express.Router();
 

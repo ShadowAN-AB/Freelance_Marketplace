@@ -17,10 +17,10 @@ const {
   revisionSchema,
   cancelSchema,
   timeEntrySchema,
-} = require('../controllers/contractController');
-const { protect, authorize, requireVerified } = require('../middleware/auth');
-const { validate } = require('../middleware/validate');
-const { uploadDeliverables } = require('../middleware/upload');
+} = require('./controller');
+const { protect, authorize, requireVerified } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
+const { uploadDeliverables } = require('../../middleware/upload');
 
 const router = express.Router();
 router.get('/me', protect, authorize('client', 'freelancer', 'admin'), myContracts);
