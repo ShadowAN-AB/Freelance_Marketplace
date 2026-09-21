@@ -180,7 +180,7 @@
   <div class="meta">
     <p><strong>Repository:</strong> github.com/ShadowAN-AB/Freelance_Marketplace</p>
     <p><strong>Local app:</strong> http://127.0.0.1:5178 or http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001 &nbsp;·&nbsp; <strong>Compose web:</strong> http://localhost:8080</p>
-    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.2</p>
+    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.3</p>
   </div>
 </section>
 
@@ -204,6 +204,7 @@
   <li><a href="#ops">16. Operations and production hooks</a></li>
   <li><a href="#viva">17. Viva talking points</a></li>
   <li><a href="#sprint">18. Presentation sprint (v2.2)</a></li>
+  <li><a href="#worthy">19. Worthy viva sprint (v2.3)</a></li>
 </ol>
 
 <h2 id="intro">1. What this project is</h2>
@@ -464,10 +465,10 @@
 <p>Browse keeps <code>q</code>, category, pricing type (fixed/hourly), due-soon, sort (newest / highest budget / due soonest), and page in the URL. Cards show <strong>Fixed price</strong>, <strong>Fixed · N milestones</strong>, or <strong>Hourly</strong>, plus pending bid counts and a relative due date (<code>due in 3d</code> / <code>overdue 2d</code>). Project detail lists the planned milestone table and a <strong>Similar open work</strong> strip from <code>GET /projects/:id/similar</code> (same category or overlapping skills). Clients see pending bid counts on My projects and can <strong>Duplicate</strong> any brief into a fresh open listing (new deadline, no hire). Talent browse keeps hourly-rate bounds in the URL. Matching score is skill overlap, capped at 100%.</p>
 
 <h3>9.3 Proposals and shortlist</h3>
-<p>Cover letter (counted out of 4000), bid amount, estimated days. The bid form warns when the amount is above <code>budgetMax</code>. Clients star pending proposals. The compare table can sort by shortlist, lowest bid, fastest delivery, or skill match, and flags over-budget rows.</p>
+<p>Cover letter (counted out of 4000), bid amount, estimated days. The bid form warns when the amount is above <code>budgetMax</code>. Clients star pending proposals. The compare table can sort by shortlist, lowest bid, fastest delivery, or skill match, and flags over-budget rows. Pending rows have Accept, Reject, and Message. After a pending bid, either party can <code>POST /conversations</code> with <code>{ projectId, userId }</code> and land on <code>/app/messages/:id</code>. Outsiders still get 403.</p>
 
 <h3>9.4 Work, deliverables, revisions, disputes</h3>
-<p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. The work card can Approve the whole job, release one milestone, approve hourly time against the escrow cap, Request revision, or Cancel &amp; refund remaining escrow. Partial payouts live on <code>Payment.releasedAmount</code> — there is still one payment row per contract.</p>
+<p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. Notifications, dashboard cards, and My projects “in progress” rows deep-link to <code>/app/work/:id</code> so the matching contract expands. The work card shows an escrow progress bar (<code>releasedAmount / amount</code> plus “1 of 2 slices”). The client types a per-slice revision note instead of a hardcoded string. Approve the whole job, release one milestone, approve hourly time against the escrow cap, or Cancel &amp; refund remaining escrow. Partial payouts live on <code>Payment.releasedAmount</code> — there is still one payment row per contract. Ledger rows on Payments / Earnings link to <code>/app/work/:id/invoice</code>.</p>
 
 <h3>9.5 Saved items and saved searches</h3>
 <p>Freelancers bookmark projects; clients bookmark talent. <code>/app/saved</code> lists them. Named saved searches replay browse filters from the dashboard.</p>
@@ -495,10 +496,12 @@
     <tr><td><code>/login</code></td><td>Guest</td><td>One-click Priya / Aisha / Admin fill</td></tr>
     <tr><td><code>/register</code>, <code>/forgot-password</code>, <code>/reset-password</code>, <code>/verify-email</code></td><td>Guest</td><td>Auth and recovery</td></tr>
     <tr><td><code>/app/dashboard</code></td><td>Signed in</td><td>Due-soon, saved searches, client “Active work” with Scan MVP ready to release</td></tr>
-    <tr><td><code>/app/work</code></td><td>Both</td><td>Milestones, hours, files, revision, release, cancel/refund, review</td></tr>
+    <tr><td><code>/app/work</code></td><td>Both</td><td>Milestones, hours, files, revision, release, cancel/refund, review; nav badge for pending slices</td></tr>
+    <tr><td><code>/app/work/:id</code></td><td>Both</td><td>Same desk, focused on that contract (escrow bar, Message, Approve hours)</td></tr>
     <tr><td><code>/app/work/:id/invoice</code></td><td>Both</td><td>Printable invoice of held / released / refunded</td></tr>
-    <tr><td><code>/app/notifications</code></td><td>Signed in</td><td>Typed inbox</td></tr>
-    <tr><td><code>/app/messages</code></td><td>Both</td><td>Threads, presence, typing</td></tr>
+    <tr><td><code>/app/notifications</code></td><td>Signed in</td><td>Typed inbox; hire/submit links go to <code>/app/work/:id</code></td></tr>
+    <tr><td><code>/app/messages</code>, <code>/app/messages/:id</code></td><td>Both</td><td>Threads with counterpart + project title; presence, typing</td></tr>
+    <tr><td><code>/app/projects</code></td><td>Client</td><td>Open / In progress / Done chips; in-progress rows link Active work</td></tr>
     <tr><td>unknown public URL</td><td>Public</td><td>404 with links home / projects / demo login</td></tr>
     <tr><td><code>/admin/contracts</code>, <code>/admin/audit</code></td><td>Admin</td><td>Escrow list and action log</td></tr>
   </tbody>
@@ -525,6 +528,12 @@
     <tr><td>POST</td><td>/contracts/:id/cancel</td><td>Party</td><td>{ reason } → refund held escrow</td></tr>
     <tr><td>GET</td><td>/payments/me, /payments/me.csv, /payments/mode</td><td>User</td><td>Ledger JSON or CSV; <code>simulated</code> vs <code>stripe</code></td></tr>
     <tr><td>POST</td><td>/payments/webhook</td><td>Stripe signature</td><td>Ignored unless secrets are set</td></tr>
+    <tr><td>POST</td><td>/conversations</td><td>Party</td><td>Open a thread after a pending/accepted bid; outsider 403</td></tr>
+    <tr><td>POST</td><td>/proposals/:id/reject</td><td>Client</td><td>Decline a pending bid</td></tr>
+    <tr><td>POST</td><td>/contracts/:id/reviews</td><td>Party</td><td>1–5 stars after complete</td></tr>
+    <tr><td>GET</td><td>/users/:id/reviews</td><td>Public</td><td>Reviews left for that user</td></tr>
+    <tr><td>POST</td><td>/reports</td><td>User</td><td>Report a user or project</td></tr>
+    <tr><td>GET</td><td>/admin/stats, /admin/reports</td><td>Admin</td><td>Role/project/escrow counts; report queue</td></tr>
     <tr><td>GET</td><td>/admin/contracts, /admin/audit</td><td>Admin</td><td>Escrow and audit log</td></tr>
     <tr><td>PATCH</td><td>/admin/users/:id/verify-skills</td><td>Admin</td><td>Verified skill tags</td></tr>
     <tr><td>GET</td><td>/health</td><td>Public</td><td><code>{ ok, mongo, service }</code> — 503 if Mongo is down</td></tr>
@@ -575,8 +584,8 @@
 </div>
 
 <h2 id="quality">14. Tests, CI, and quality</h2>
-<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has 16 cases: register/login, public marketplace stats, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, pricing-type list filter, budget sort, pending bid counts + similar projects, CSV ledger export, and project duplicate (owner-only).</p>
-<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (INR, pricing labels, relative times, due dates). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
+<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has <strong>21 cases</strong>: register/login, public marketplace stats, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, complete then review + <code>GET /users/:id/reviews</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, pricing-type list filter, budget sort, pending bid counts + similar projects, CSV ledger export, project duplicate (owner-only), open conversation after a pending bid (outsider 403), admin stats 200 vs freelancer 403, reject a pending bid, create a report then admin list, and unverified clients blocked from posting when the verify gate is on.</p>
+<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (INR, pricing labels, relative times, due dates, escrow progress). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then <code>npm --prefix server run seed</code> against <code>freelancehub_e2e</code> before Playwright so demo listings exist.</p>
 
 <h2 id="setup">15. Local setup and demo</h2>
 <h3>Prerequisites</h3>
@@ -595,20 +604,21 @@ cd client && npm install && npm run dev</pre>
   <thead><tr><th>Role</th><th>Email</th><th>Notes</th></tr></thead>
   <tbody>
     <tr><td>Admin</td><td>admin@freelancehub.dev</td><td>Users, contracts, audit, reports</td></tr>
-    <tr><td>Client</td><td>priya@freelancehub.dev</td><td>Due-soon landing page, dashboard milestones, inventory hire with Scan MVP submitted</td></tr>
+    <tr><td>Client</td><td>priya@freelancehub.dev</td><td>Due-soon landing, Scan MVP submitted (real notes file), hourly desk with 4h pending</td></tr>
     <tr><td>Client</td><td>arjun@freelancehub.dev</td><td>Completed SEO contract with Leo</td></tr>
-    <tr><td>Freelancer</td><td>aisha@freelancehub.dev</td><td>Pending dashboard bid + active mobile contract; verified React/Node tags after a fresh seed</td></tr>
+    <tr><td>Freelancer</td><td>aisha@freelancehub.dev</td><td>Pending logistics bid, inventory contract, hourly pairing desk; verified React/Node tags</td></tr>
     <tr><td>Freelancer</td><td>kabir@…, meera@…, leo@…</td><td>Extra bids and a completed job</td></tr>
   </tbody>
 </table>
 <h3>Ten-minute walkthrough</h3>
 <ol>
   <li>Home page live stats (open jobs, talent, completed work, escrow held) → <strong>Viva demo login</strong> → Priya chip → Sign in.</li>
-  <li>Dashboard: due-soon landing, Active work says <strong>Ready to release · Scan MVP</strong>.</li>
-  <li>Open Active work. Release Scan MVP. Escrow drops by ₹36,000; Offline sync stays held.</li>
-  <li>Log out. Login as Aisha. Open the logistics dashboard — <strong>Your proposal / Pending</strong>, not a second form.</li>
-  <li>Browse <code>/projects?pricingType=hourly</code> for the Node pairing listing. Filters stay in the URL.</li>
-  <li>Open Messages on two accounts: presence dots, typing line. As admin, open Contracts (escrow column) and Audit.</li>
+  <li>Dashboard: due-soon landing, Active work says <strong>Ready to release · Scan MVP</strong> (deep-links into that contract).</li>
+  <li>Open Active work. Download Scan MVP notes. Release Scan MVP. Escrow bar moves; Offline sync stays held.</li>
+  <li>On the hourly card, <strong>Approve 4h</strong>. Payments ledger rows open the invoice.</li>
+  <li>Message Aisha from the work card or the proposals table. Thread header shows counterpart + project title.</li>
+  <li>Log out. Login as Aisha. Open the logistics dashboard — <strong>Your proposal / Pending</strong>, not a second form. Browse <code>/projects?pricingType=hourly</code> for the still-open Node pairing listing.</li>
+  <li>As admin, open Contracts, Reports, and Audit (hire / milestone submit / report rows are seeded).</li>
 </ol>
 
 <h2 id="ops">16. Operations and production hooks</h2>
@@ -629,7 +639,7 @@ cd client && npm install && npm run dev</pre>
   <li>If port 27017 already has a local MongoDB, Docker’s mapped port will fail or you will see an empty database. Point <code>MONGO_URI</code> at the instance that contains the seed.</li>
 </ul>
 <div class="note">
-  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.2: sequential feature pack, improvement slices, desk pack, viva seed/UI, and the presentation sprint (live stats, similar jobs, CSV ledger, relative times, bid compare, duplicate brief).
+  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.3: sequential feature pack, presentation sprint, then the worthy viva sprint (real Scan MVP file, hourly approve seed, work deep links, Message CTA, 21 API tests, CI seed before Playwright).
 </div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 
@@ -644,7 +654,7 @@ cd client && npm install && npm run dev</pre>
     <tr><td>How do you stop double bids?</td><td>Unique index on <code>{ projectId, freelancerId }</code>. A second pending bid is 409. Withdraw sets <code>withdrawn</code>; the same row can go back to <code>pending</code>.</td></tr>
     <tr><td>Fixed vs hourly?</td><td>Fixed may split into 2–3 milestones that must sum to <code>budgetMax</code>. Hourly holds <code>budgetMax</code> as a cap; approved hours cannot exceed remaining escrow.</td></tr>
     <tr><td>How is chat authorised?</td><td>HTTP messages and socket <code>conversation:join</code> both check that the user is a participant. Join is not an open room id.</td></tr>
-    <tr><td>What is tested?</td><td>16 API tests on a throwaway Mongo database, Vitest for INR/pricing/relative dates, Playwright smoke for the hire loop, GitHub Actions on <code>main</code>.</td></tr>
+    <tr><td>What is tested?</td><td>21 API tests on a throwaway Mongo database (hire loop, admin, reject, reviews, reports, chat open), Vitest for INR/pricing/escrow progress, Playwright hire-loop plus seeded viva smokes. GitHub Actions seeds <code>freelancehub_e2e</code> before Playwright.</td></tr>
     <tr><td>What would you do next if this shipped?</td><td>Rotate <code>JWT_SECRET</code>, turn off <code>SKIP_EMAIL_VERIFY</code>, put files on S3, turn on Stripe, put Socket.IO on Redis if you run more than one API process.</td></tr>
   </tbody>
 </table>
@@ -667,6 +677,23 @@ cd client && npm install && npm run dev</pre>
     <tr><td>Notifications</td><td>Relative timestamps and Mark all read.</td></tr>
   </tbody>
 </table>
+<p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
+
+<h2 id="worthy">19. Worthy viva sprint (v2.3)</h2>
+<p>Shipped after v2.2 so the demo does not break when an examiner clicks. Each slice is its own GitHub commit on <code>main</code>.</p>
+<table>
+  <thead><tr><th>Slice</th><th>What to show</th></tr></thead>
+  <tbody>
+    <tr><td>Seed</td><td>Scan MVP notes is a real <code>/uploads/scan-mvp-notes.txt</code>. Audit has hire/submit/report rows. Priya has a second active card: Warehouse Node pairing desk with 4h pending. The original hourly listing stays open for browse e2e.</td></tr>
+    <tr><td>Desk</td><td><code>/app/work/:id</code> expands the contract. Escrow bar uses <code>releasedAmount / amount</code> plus slice counts. Active-work nav badge. My projects Open / In progress / Done.</td></tr>
+    <tr><td>Chat</td><td>Message from proposals and the work card (<code>POST /conversations</code>). Thread header: counterpart + project. Invite banner + toast. Per-slice revision textarea.</td></tr>
+    <tr><td>Quality</td><td>Admin stats, reject, reviews, reports, and the email-verify gate have API tests. CI seeds before Playwright. Payments ledger links to invoices.</td></tr>
+    <tr><td>Docs</td><td>This HTML + PDF v2.3 and the README five-minute beat (hourly approve + audit log).</td></tr>
+  </tbody>
+</table>
+<div class="callout">
+  <strong>Demo sentence (v2.3).</strong> “Priya’s dashboard jumps straight into Scan MVP. I will download the notes, release that slice, approve four hours on the hourly desk, message Aisha from the card, then open Admin → Audit so you can see the seeded hire and submit rows.”
+</div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 </body>
 </html>

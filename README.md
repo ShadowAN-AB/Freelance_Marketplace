@@ -45,7 +45,7 @@ cd client && npm test
 cd client && npm run e2e
 ```
 
-GitHub Actions runs API tests, the client build, then a Playwright hire-loop smoke.
+GitHub Actions runs 21 API tests, the client build, then seeds `freelancehub_e2e` before the Playwright hire-loop and viva smokes.
 
 ## Docker
 
@@ -73,8 +73,8 @@ Password for every seeded account: `Password123!`
 3. Active work → filter Submitted → Release Scan MVP (₹36,000). Offline sync stays held.
 4. Payments → Download CSV for the held/released ledger.
 5. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
-6. Active work → hourly card → Approve 4h. Admin → Audit has hire/submit rows.
-7. Browse `/projects?pricingType=hourly` or sort by highest budget.
+6. Active work deep-links the Scan MVP card; download the notes, then Approve 4h on the hourly desk.
+7. Message Aisha from the work card. Admin → Audit has hire/submit/report rows. Browse `/projects?pricingType=hourly`.
 
 ## Layout
 
