@@ -6,14 +6,18 @@ import api from '../services/api'
 export function PublicNav() {
   const { user, logout } = useAuth()
   return (
-    <header className="border-b border-line bg-paper/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b-2 border-ink/10 bg-paper/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link to="/" className="font-display text-2xl">
-          FreelanceHub
+          Freelance<span className="text-coral">Hub</span>
         </Link>
-        <nav className="flex items-center gap-5 text-sm font-semibold">
-          <Link to="/projects">Projects</Link>
-          <Link to="/freelancers">Talent</Link>
+        <nav className="flex items-center gap-5 text-sm font-bold">
+          <Link to="/projects" className="hover:text-coral">
+            Projects
+          </Link>
+          <Link to="/freelancers" className="hover:text-teal">
+            Talent
+          </Link>
           {user ? (
             <>
               <Link to={user.role === 'admin' ? '/admin' : '/app/dashboard'}>Dashboard</Link>
@@ -22,7 +26,7 @@ export function PublicNav() {
           ) : (
             <>
               <Link to="/login">Log in</Link>
-              <Link to="/register" className="rounded-md bg-teal px-3 py-1.5 text-paper">
+              <Link to="/register" className="rounded-full bg-coral px-4 py-1.5 text-white shadow-[0_4px_0_#c4321c]">
                 Join
               </Link>
             </>
@@ -48,6 +52,7 @@ const links = {
     ['Browse', '/projects'],
     ['Proposals', '/app/proposals'],
     ['Active work', '/app/work'],
+    ['Saved', '/app/saved'],
     ['Messages', '/app/messages'],
     ['Earnings', '/app/earnings'],
     ['Profile', '/app/profile'],
@@ -59,6 +64,7 @@ const links = {
     ['My projects', '/app/projects'],
     ['Messages', '/app/messages'],
     ['Active work', '/app/work'],
+    ['Saved', '/app/saved'],
     ['Profile', '/app/profile'],
     ['Settings', '/app/settings'],
   ],
@@ -73,14 +79,25 @@ const links = {
 export function AppShell({ children }) {
   const { user, logout } = useAuth()
   const items = links[user.role] || links.client
+  const unread = useQuery({
+    queryKey: ['unread-count'],
+    queryFn: async () => (await api.get('/conversations/unread-count')).data,
+    refetchInterval: 20000,
+    enabled: user.role !== 'admin',
+  })
+  const alerts = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => (await api.get('/notifications')).data,
+    refetchInterval: 20000,
+  })
   return (
-    <div className="min-h-svh md:grid md:grid-cols-[240px_1fr]">
-      <aside className="border-b border-line bg-white md:border-b-0 md:border-r">
-        <div className="px-5 py-5">
+    <div className="min-h-svh md:grid md:grid-cols-[250px_1fr]">
+      <aside className="border-b-2 border-ink/10 bg-ink text-white md:border-b-0 md:border-r-0">
+        <div className="px-5 py-6">
           <Link to="/" className="font-display text-2xl">
-            FreelanceHub
+            Freelance<span className="text-saffron">Hub</span>
           </Link>
-          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-muted">{user.role}</p>
+          <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-2">{user.role}</p>
         </div>
         <nav className="flex gap-3 overflow-x-auto px-4 pb-4 md:block md:space-y-1 md:overflow-visible">
           {items.map(([label, href]) => (
@@ -89,26 +106,40 @@ export function AppShell({ children }) {
               to={href}
               end={href === '/app/dashboard' || href === '/admin' || href === '/app/projects'}
               className={({ isActive }) =>
-                `block rounded-md px-3 py-2 text-sm font-semibold ${isActive ? 'bg-paper-2 text-teal' : 'text-ink hover:bg-paper'}`
+                `flex items-center rounded-full px-3 py-2 text-sm font-bold ${isActive ? 'bg-coral text-white' : 'text-white/80 hover:bg-white/10'}`
               }
             >
               {label}
+              {href === '/app/messages' && unread.data?.unread ? (
+                <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white">
+                  {unread.data.unread}
+                </span>
+              ) : null}
             </NavLink>
           ))}
-          <button onClick={logout} className="block w-full rounded-md px-3 py-2 text-left text-sm font-semibold text-muted">
+          <button onClick={logout} className="block w-full rounded-full px-3 py-2 text-left text-sm font-bold text-white/50">
             Log out
           </button>
         </nav>
       </aside>
       <div>
-        <Topbar />
+        <Topbar alertCount={alerts.data?.unread || 0} />
         <div className="p-4 md:p-8">{children}</div>
       </div>
     </div>
   )
 }
 
-function Topbar() {
+function CountBadge({ count }) {
+  if (!count) return null
+  return (
+    <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-coral px-1.5 text-[11px] text-white">
+      {count}
+    </span>
+  )
+}
+
+function Topbar({ alertCount = 0 }) {
   const { user } = useAuth()
   const qc = useQueryClient()
   const { data } = useQuery({
@@ -121,22 +152,25 @@ function Topbar() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
   return (
-    <div className="flex items-center justify-between border-b border-line px-4 py-3 md:px-8">
-      <p className="text-sm text-muted">Signed in as {user.name}</p>
+    <div className="flex items-center justify-between border-b-2 border-ink/10 px-4 py-3 md:px-8">
+      <p className="text-sm font-semibold">
+        Signed in as <span className="text-coral">{user.name}</span>
+      </p>
       <details className="relative">
-        <summary className="cursor-pointer list-none rounded-md border border-line px-3 py-1.5 text-sm font-semibold">
-          Alerts {data?.unread ? `(${data.unread})` : ''}
+        <summary className="flex cursor-pointer list-none items-center rounded-full bg-saffron px-4 py-1.5 text-sm font-bold">
+          Alerts
+          <CountBadge count={alertCount || data?.unread || 0} />
         </summary>
-        <div className="absolute right-0 z-10 mt-2 w-80 rounded-lg border border-line bg-white p-3 shadow-sm">
+        <div className="absolute right-0 z-10 mt-2 w-80 rounded-2xl border-2 border-ink/10 bg-white p-3 shadow-[8px_8px_0_rgba(28,18,8,0.12)]">
           <div className="mb-2 flex justify-between">
-            <span className="text-sm font-semibold">Notifications</span>
-            <button className="text-xs text-teal" onClick={() => mark.mutate()}>
+            <span className="text-sm font-bold">Notifications</span>
+            <button className="text-xs font-bold text-coral" onClick={() => mark.mutate()}>
               Mark read
             </button>
           </div>
           <div className="max-h-72 space-y-2 overflow-y-auto">
             {(data?.data || []).slice(0, 8).map((n) => (
-              <Link key={n._id} to={n.link || '/app/dashboard'} className="block rounded-md bg-paper p-2 text-sm">
+              <Link key={n._id} to={n.link || '/app/dashboard'} className="block rounded-xl bg-paper p-2 text-sm">
                 <strong>{n.title}</strong>
                 <p className="text-muted">{n.body}</p>
               </Link>

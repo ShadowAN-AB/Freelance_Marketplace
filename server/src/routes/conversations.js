@@ -5,6 +5,7 @@ const {
   listMessages,
   sendMessageHttp,
   markRead,
+  unreadCount,
   openSchema,
 } = require('../controllers/chatController');
 const { protect } = require('../middleware/auth');
@@ -17,6 +18,7 @@ const sendSchema = z.object({
 
 const router = express.Router();
 router.get('/', protect, listConversations);
+router.get('/unread-count', protect, unreadCount);
 router.post('/', protect, validate(openSchema), openConversation);
 router.get('/:id/messages', protect, listMessages);
 router.post('/:id/messages', protect, validate(sendSchema), sendMessageHttp);

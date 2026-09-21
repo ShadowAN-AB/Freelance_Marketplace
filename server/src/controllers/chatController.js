@@ -113,6 +113,24 @@ const sendMessageHttp = asyncHandler(async (req, res) => {
   res.status(201).json({ message: populated });
 });
 
+const unreadCount = asyncHandler(async (req, res) => {
+  const conversations = await Conversation.find({ participants: req.user._id }).select('_id');
+  if (!conversations.length) return res.json({ unread: 0 });
+  const ids = conversations.map((c) => c._id);
+  const latest = await Message.aggregate([
+    { $match: { conversationId: { $in: ids } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: '$conversationId', latest: { $first: '$$ROOT' } } },
+    {
+      $match: {
+        $expr: { $not: { $in: [req.user._id, '$latest.readBy'] } },
+      },
+    },
+    { $count: 'unread' },
+  ]);
+  res.json({ unread: latest[0]?.unread || 0 });
+});
+
 const markRead = asyncHandler(async (req, res) => {
   const conversation = await Conversation.findById(req.params.id);
   if (!conversation) throw new ApiError(404, 'Conversation not found');
@@ -132,5 +150,6 @@ module.exports = {
   listMessages,
   sendMessageHttp,
   markRead,
+  unreadCount,
   openSchema,
 };
