@@ -73,3 +73,17 @@ export const CATEGORIES = [
   'Marketing',
   'Other',
 ]
+
+export function profileCompleteness(user) {
+  const checks = [Boolean(user?.name), Boolean(user?.bio), Boolean(user?.location), Boolean(user?.avatarUrl)]
+  if (user?.role === 'freelancer') {
+    checks.push(Boolean(user.freelancerProfile?.title))
+    checks.push((user.freelancerProfile?.skills || []).length > 0)
+    checks.push(Number(user.freelancerProfile?.hourlyRate) > 0)
+  }
+  if (user?.role === 'client') {
+    checks.push(Boolean(user.clientProfile?.companyName))
+  }
+  const filled = checks.filter(Boolean).length
+  return checks.length ? Math.round((100 * filled) / checks.length) : 0
+}

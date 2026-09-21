@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { Button, ErrorText, Field, Input, Textarea } from '../../components/ui/Primitives'
-import { errorMessage } from '../../lib/format'
+import { errorMessage, profileCompleteness } from '../../lib/format'
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth()
@@ -62,9 +62,27 @@ export default function ProfilePage() {
     setUser(data.user)
   }
 
+  const liveUser = {
+    ...user,
+    name: form.name,
+    bio: form.bio,
+    location: form.location,
+    freelancerProfile:
+      user.role === 'freelancer'
+        ? {
+            ...user.freelancerProfile,
+            title: form.title,
+            skills: form.skills.split(',').map((s) => s.trim()).filter(Boolean),
+            hourlyRate: Number(form.hourlyRate) || 0,
+          }
+        : user.freelancerProfile,
+    clientProfile: user.role === 'client' ? { companyName: form.companyName } : user.clientProfile,
+  }
+
   return (
     <div className="max-w-xl">
       <h1 className="font-display text-4xl">Profile</h1>
+      <ProfileMeter user={liveUser} />
       <form onSubmit={save} className="mt-6 space-y-4">
         <ErrorText error={error} />
         {saved ? <p className="text-teal">Saved.</p> : null}
@@ -113,6 +131,22 @@ export default function ProfilePage() {
         ) : null}
         <Button>Save profile</Button>
       </form>
+    </div>
+  )
+}
+
+function ProfileMeter({ user }) {
+  const percent = profileCompleteness(user)
+  return (
+    <div className="mt-4 rounded-2xl border-2 border-ink/10 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted">Profile completeness</p>
+      <p className="font-display mt-1 text-2xl">{percent}%</p>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
+        <div className="h-full bg-teal" style={{ width: `${percent}%` }} />
+      </div>
+      <p className="mt-2 text-sm text-muted">
+        {percent === 100 ? 'Ready for the viva — examiners can open your public page.' : 'Add a bio, location, avatar, and role details to look hireable.'}
+      </p>
     </div>
   )
 }

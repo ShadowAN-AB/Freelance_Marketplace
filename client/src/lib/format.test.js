@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { errorMessage, inr, pricingLabel, formatRelative, formatDue } from './format'
+import { errorMessage, inr, pricingLabel, formatRelative, formatDue, profileCompleteness } from './format'
 
 describe('format helpers', () => {
   it('reads API error messages', () => {
@@ -25,5 +25,19 @@ describe('format helpers', () => {
   it('formats upcoming deadlines', () => {
     expect(formatDue(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000))).toBe('due in 3d')
     expect(formatDue(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000))).toBe('overdue 2d')
+  })
+
+  it('scores how complete a profile is', () => {
+    expect(
+      profileCompleteness({
+        role: 'client',
+        name: 'Priya',
+        bio: 'Ops',
+        location: 'Pune',
+        avatarUrl: '/a.png',
+        clientProfile: { companyName: 'Northline' },
+      })
+    ).toBe(100)
+    expect(profileCompleteness({ role: 'client', name: 'Priya' })).toBe(20)
   })
 })

@@ -87,6 +87,7 @@ export default function ProjectDetailsPage() {
         <p className="mt-6 font-semibold">
           {pricingLabel(project)} · {inr(project.budgetMin)} – {inr(project.budgetMax)}
         </p>
+        <CopyListingLink />
         {project.pricingType === 'hourly' ? (
           <p className="mt-2 text-sm text-muted">Hourly work. Escrow holds the max budget as a cap until hours are approved.</p>
         ) : null}
@@ -172,6 +173,27 @@ export default function ProjectDetailsPage() {
         <SimilarProjects projectId={id} />
       </div>
     </PublicLayout>
+  )
+}
+
+function CopyListingLink() {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      type="button"
+      className="mt-3 text-sm font-semibold text-teal"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(window.location.href)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1500)
+        } catch {
+          setCopied(false)
+        }
+      }}
+    >
+      {copied ? 'Link copied' : 'Copy listing link'}
+    </button>
   )
 }
 
