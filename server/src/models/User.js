@@ -46,6 +46,8 @@ const userSchema = new mongoose.Schema(
     clientProfile: { type: clientProfileSchema, default: () => ({}) },
     avgRating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0, min: 0 },
+    savedProjectIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
+    savedFreelancerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

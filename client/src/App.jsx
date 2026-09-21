@@ -13,6 +13,7 @@ import RegisterPage from './pages/auth/RegisterPage'
 import DashboardPage from './pages/shared/DashboardPage'
 import ProfilePage from './pages/shared/ProfilePage'
 import SettingsPage from './pages/shared/SettingsPage'
+import SavedPage from './pages/shared/SavedPage'
 import MessagesPage from './pages/shared/MessagesPage'
 import WorkPage from './pages/shared/WorkPage'
 import PostProjectPage from './pages/client/PostProjectPage'
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="/app/dashboard" element={<DashboardPage />} />
               <Route path="/app/profile" element={<ProfilePage />} />
               <Route path="/app/settings" element={<SettingsPage />} />
+              <Route path="/app/saved" element={<SavedPage />} />
               <Route path="/app/messages" element={<MessagesPage />} />
               <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
               <Route path="/app/work" element={<WorkPage />} />

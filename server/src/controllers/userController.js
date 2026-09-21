@@ -1,10 +1,16 @@
 const { z } = require('zod');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Project = require('../models/Project');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { ApiError } = require('../utils/apiError');
 const { publicUser, USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 const { paginateQuery, paginateResult } = require('../utils/paginate');
 const { normalizeSkills } = require('../utils/skills');
+
+function assertObjectId(id) {
+  if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, 'Invalid id');
+}
 
 const updateMeSchema = z.object({
   body: z.object({
@@ -90,4 +96,59 @@ const listFreelancers = asyncHandler(async (req, res) => {
   res.json(paginateResult({ data: data.map(publicUser), total, page, limit }));
 });
 
-module.exports = { getUser, updateMe, uploadAvatar, listFreelancers, updateMeSchema };
+const getSaved = asyncHandler(async (req, res) => {
+  const me = await User.findById(req.user._id)
+    .populate({
+      path: 'savedProjectIds',
+      populate: { path: 'clientId', select: USER_PUBLIC_FIELDS },
+    })
+    .populate({ path: 'savedFreelancerIds', select: USER_PUBLIC_FIELDS });
+  res.json({
+    projects: me.savedProjectIds || [],
+    talent: me.savedFreelancerIds || [],
+  });
+});
+
+const saveProject = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id);
+  const project = await Project.findById(req.params.id);
+  if (!project) throw new ApiError(404, 'Project not found');
+  await User.findByIdAndUpdate(req.user._id, { $addToSet: { savedProjectIds: project._id } });
+  res.json({ ok: true, saved: true });
+});
+
+const unsaveProject = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id);
+  await User.findByIdAndUpdate(req.user._id, { $pull: { savedProjectIds: req.params.id } });
+  res.json({ ok: true, saved: false });
+});
+
+const saveTalent = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id);
+  const talent = await User.findOne({ _id: req.params.id, role: 'freelancer' });
+  if (!talent) throw new ApiError(404, 'Freelancer not found');
+  if (talent._id.toString() === req.user._id.toString()) {
+    throw new ApiError(400, 'You cannot save your own profile');
+  }
+  await User.findByIdAndUpdate(req.user._id, { $addToSet: { savedFreelancerIds: talent._id } });
+  res.json({ ok: true, saved: true });
+});
+
+const unsaveTalent = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.id);
+  await User.findByIdAndUpdate(req.user._id, { $pull: { savedFreelancerIds: req.params.id } });
+  res.json({ ok: true, saved: false });
+});
+
+module.exports = {
+  getUser,
+  updateMe,
+  uploadAvatar,
+  listFreelancers,
+  updateMeSchema,
+  getSaved,
+  saveProject,
+  unsaveProject,
+  saveTalent,
+  unsaveTalent,
+};
