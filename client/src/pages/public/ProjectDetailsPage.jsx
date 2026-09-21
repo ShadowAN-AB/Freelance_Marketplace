@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PublicLayout } from '../../layouts/Layouts'
 import { Button, ErrorText, Field, Spinner, StatusBadge, Textarea, Input } from '../../components/ui/Primitives'
-import { inr, formatDate, errorMessage, pricingLabel } from '../../lib/format'
+import { inr, formatDue, errorMessage, pricingLabel } from '../../lib/format'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import { ReportControl } from '../../components/ReportControl'
@@ -74,7 +74,7 @@ export default function ProjectDetailsPage() {
           ) : (
             project.clientId?.name
           )}{' '}
-          · due {formatDate(project.deadline)}
+          · {formatDue(project.deadline)}
         </p>
         <p className="mt-6 whitespace-pre-wrap leading-relaxed">{project.description}</p>
         <div className="mt-4 flex flex-wrap gap-2">

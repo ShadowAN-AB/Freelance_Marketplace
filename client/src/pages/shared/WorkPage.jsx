@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import api from '../../services/api'
 import { Button, EmptyState, Field, Input, Spinner, StatusBadge, Textarea } from '../../components/ui/Primitives'
-import { formatDate, inr, errorMessage } from '../../lib/format'
+import { formatDate, formatRelative, inr, errorMessage } from '../../lib/format'
 
 function activityItems(contract, payment) {
   const items = []
@@ -318,7 +318,7 @@ function ContractCard({ contract, onChange }) {
         <p className="text-sm font-bold">Activity</p>
         <ul className="mt-2 space-y-1 text-sm text-muted">
           {activityItems(live, payment).map((item, i) => (
-            <li key={`${item.label}-${i}`}>{formatDate(item.at)} · {item.label}</li>
+            <li key={`${item.label}-${i}`}>{formatRelative(item.at)} · {item.label}</li>
           ))}
         </ul>
       </div>

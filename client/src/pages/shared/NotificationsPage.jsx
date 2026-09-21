@@ -2,7 +2,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import { EmptyState, Spinner } from '../../components/ui/Primitives'
-import { formatDate } from '../../lib/format'
+import { formatRelative } from '../../lib/format'
 
 const FILTERS = [
   ['', 'All'],
@@ -51,7 +51,7 @@ export default function NotificationsPage() {
             >
               <p className="font-semibold">{n.title}</p>
               <p className="text-sm text-muted">{n.body}</p>
-              <p className="mt-1 text-xs text-muted">{formatDate(n.createdAt)}</p>
+              <p className="mt-1 text-xs text-muted">{formatRelative(n.createdAt)}</p>
             </Link>
           </li>
         ))}

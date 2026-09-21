@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { inr, formatDate, pricingLabel } from '../../lib/format'
+import { inr, formatDue, pricingLabel } from '../../lib/format'
 import { SkillChip, StatusBadge } from '../ui/Primitives'
 
 export function ProjectCard({ project }) {
@@ -25,7 +25,7 @@ export function ProjectCard({ project }) {
         ))}
       </div>
       <p className="mt-4 text-sm font-bold text-teal">
-        {inr(project.budgetMin)} – {inr(project.budgetMax)} · due {formatDate(project.deadline)}
+        {inr(project.budgetMin)} – {inr(project.budgetMax)} · {formatDue(project.deadline)}
         {project.proposalCount != null ? ` · ${project.proposalCount} bid${project.proposalCount === 1 ? '' : 's'}` : ''}
       </p>
       {project.clientId?.clientProfile?.companyName || project.clientId?.name ? (
