@@ -23,7 +23,18 @@ export default function NotificationsPage() {
   const list = data?.data || []
   return (
     <div>
-      <h1 className="font-display text-4xl">Notifications</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-display text-4xl">Notifications</h1>
+        {list.some((n) => !n.read) ? (
+          <button
+            type="button"
+            className="rounded-full border-2 border-ink/10 bg-white px-3 py-1 text-sm font-bold"
+            onClick={() => api.patch('/notifications/read').then(() => qc.invalidateQueries({ queryKey: ['notifications'] }))}
+          >
+            Mark all read
+          </button>
+        ) : null}
+      </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {FILTERS.map(([id, label]) => (
           <button

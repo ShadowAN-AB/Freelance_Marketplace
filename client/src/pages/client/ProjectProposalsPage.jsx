@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
@@ -7,6 +8,7 @@ import { inr, skillMatchPercent } from '../../lib/format'
 export default function ProjectProposalsPage() {
   const { id } = useParams()
   const qc = useQueryClient()
+  const [sort, setSort] = useState('shortlist')
   const { data, isLoading } = useQuery({
     queryKey: ['project-proposals', id],
     queryFn: async () => (await api.get(`/projects/${id}/proposals`)).data,
@@ -32,12 +34,40 @@ export default function ProjectProposalsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['project-proposals', id] }),
   })
   if (isLoading) return <Spinner />
-  const list = [...(data?.data || [])].sort((a, b) => Number(!!b.shortlisted) - Number(!!a.shortlisted))
   const skills = project.data?.project?.skills || []
+  const budgetMax = project.data?.project?.budgetMax
+  const list = [...(data?.data || [])].sort((a, b) => {
+    if (sort === 'bid') return a.bidAmount - b.bidAmount
+    if (sort === 'days') return a.estimatedDays - b.estimatedDays
+    if (sort === 'match') {
+      return (
+        skillMatchPercent(skills, b.freelancerId?.freelancerProfile?.skills) -
+        skillMatchPercent(skills, a.freelancerId?.freelancerProfile?.skills)
+      )
+    }
+    return Number(!!b.shortlisted) - Number(!!a.shortlisted)
+  })
   return (
     <div>
       <h1 className="font-display text-4xl">Proposals</h1>
       <p className="mt-2 text-sm text-muted">Compare bids, then read cover letters below.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {[
+          ['shortlist', 'Shortlist first'],
+          ['bid', 'Lowest bid'],
+          ['days', 'Fastest'],
+          ['match', 'Best skill match'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setSort(id)}
+            className={`rounded-full px-3 py-1 text-sm font-bold ${sort === id ? 'bg-coral text-white' : 'border-2 border-ink/10 bg-white'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       {list.length ? (
         <div className="mt-6 overflow-x-auto rounded-2xl border-2 border-ink/10 bg-white">
           <table className="w-full min-w-[720px] text-left text-sm">
@@ -59,7 +89,12 @@ export default function ProjectProposalsPage() {
                   <td className="px-3 py-2 font-semibold">
                     <Link to={`/freelancers/${p.freelancerId?._id}`}>{p.freelancerId?.name}</Link>
                   </td>
-                  <td className="px-3 py-2">{inr(p.bidAmount)}</td>
+                  <td className="px-3 py-2">
+                    {inr(p.bidAmount)}
+                    {budgetMax != null && p.bidAmount > budgetMax ? (
+                      <span className="ml-1 text-xs font-bold text-danger">over budget</span>
+                    ) : null}
+                  </td>
                   <td className="px-3 py-2">{p.estimatedDays}</td>
                   <td className="px-3 py-2">{p.freelancerId?.avgRating ? `${p.freelancerId.avgRating}★` : '—'}</td>
                   <td className="px-3 py-2">{skillMatchPercent(skills, p.freelancerId?.freelancerProfile?.skills)}%</td>
@@ -117,7 +152,12 @@ export default function ProjectProposalsPage() {
               <StatusBadge status={p.status} />
             </div>
             <p className="mt-2 text-muted">{p.coverLetter}</p>
-            <p className="mt-3 font-semibold">{inr(p.bidAmount)} · {p.estimatedDays} days</p>
+            <p className="mt-3 font-semibold">
+              {inr(p.bidAmount)} · {p.estimatedDays} days
+              {budgetMax != null && p.bidAmount > budgetMax ? (
+                <span className="ml-2 text-sm font-bold text-danger">Over the {inr(budgetMax)} max</span>
+              ) : null}
+            </p>
             {p.status === 'pending' ? (
               <div className="mt-4 flex gap-2">
                 <Button onClick={() => accept.mutate(p._id)}>Accept & hold escrow</Button>

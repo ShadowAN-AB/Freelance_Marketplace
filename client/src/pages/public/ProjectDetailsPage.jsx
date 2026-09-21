@@ -135,9 +135,18 @@ export default function ProjectDetailsPage() {
           >
             <h2 className="font-display text-2xl">{myProposal?.status === 'withdrawn' ? 'Submit a new proposal' : 'Submit a proposal'}</h2>
             <ErrorText error={error} />
-            <Field label="Cover letter">
-              <Textarea rows={5} value={form.coverLetter} onChange={(e) => setForm({ ...form, coverLetter: e.target.value })} required />
+            <Field label={`Cover letter (${form.coverLetter.length}/4000)`}>
+              <Textarea
+                rows={5}
+                maxLength={4000}
+                value={form.coverLetter}
+                onChange={(e) => setForm({ ...form, coverLetter: e.target.value })}
+                required
+              />
             </Field>
+            {project.budgetMax && Number(form.bidAmount) > project.budgetMax ? (
+              <p className="text-sm font-bold text-danger">This bid is above the {inr(project.budgetMax)} max budget.</p>
+            ) : null}
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Bid (INR)">
                 <Input type="number" value={form.bidAmount} onChange={(e) => setForm({ ...form, bidAmount: e.target.value })} required />
