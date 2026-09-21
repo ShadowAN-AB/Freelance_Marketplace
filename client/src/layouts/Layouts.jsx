@@ -42,6 +42,12 @@ export function PublicLayout({ children }) {
     <div className="min-h-svh">
       <PublicNav />
       {children}
+      <footer className="border-t-2 border-ink/10 px-4 py-8 text-center text-sm text-muted">
+        FreelanceHub demo · password <span className="font-bold text-ink">Password123!</span> ·{' '}
+        <Link to="/login" className="font-semibold text-teal">
+          viva logins
+        </Link>
+      </footer>
     </div>
   )
 }

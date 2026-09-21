@@ -1,10 +1,10 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
 import { ProtectedRoute, RoleRoute, GuestRoute } from './components/layout/Guards'
 import { AppShell } from './layouts/Layouts'
-import HomePage from './pages/public/HomePage'
+import NotFoundPage from './pages/public/NotFoundPage'
 import BrowseProjectsPage from './pages/public/BrowseProjectsPage'
 import BrowseFreelancersPage from './pages/public/BrowseFreelancersPage'
 import ProjectDetailsPage from './pages/public/ProjectDetailsPage'
@@ -91,7 +91,7 @@ export default function App() {
                 <Route path="/admin/audit" element={<RoleRoute roles={['admin']}><AdminAuditPage /></RoleRoute>} />
               </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
