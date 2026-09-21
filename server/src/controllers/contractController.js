@@ -89,7 +89,7 @@ const submitWork = asyncHandler(async (req, res) => {
     type: 'work_submitted',
     title: 'Work submitted',
     body: `${req.user.name} submitted work for ${contract.projectId.title}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   res.json({ contract });
 });
@@ -174,7 +174,7 @@ const requestRevision = asyncHandler(async (req, res) => {
     type: 'revision_requested',
     title: 'Revision requested',
     body: `${req.user.name} asked for changes on ${contract.projectId.title}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   const freelancer = await User.findById(contract.freelancerId).select('email');
   if (freelancer?.email) {
@@ -212,7 +212,7 @@ const cancelContract = asyncHandler(async (req, res) => {
     type: 'contract_cancelled',
     title: 'Contract cancelled',
     body: `${req.user.name} cancelled ${contract.projectId.title}: ${req.body.reason}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   res.json({ contract });
 });
@@ -348,7 +348,7 @@ const submitMilestoneWork = asyncHandler(async (req, res) => {
     type: 'work_submitted',
     title: 'Milestone submitted',
     body: `${req.user.name} submitted ${milestone.title} on ${contract.projectId.title}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   res.json({ contract });
 });
@@ -376,7 +376,7 @@ const requestMilestoneRevision = asyncHandler(async (req, res) => {
     type: 'revision_requested',
     title: 'Revision requested',
     body: `${req.user.name} asked for changes on ${milestone.title}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   res.json({ contract });
 });
@@ -455,7 +455,7 @@ const reviewTimeEntry = asyncHandler(async (req, res) => {
       type: 'time_approved',
       title: 'Hours approved',
       body: `${entry.hours}h approved on ${contract.projectId.title}`,
-      link: `/app/work`,
+      link: `/app/work/${contract._id}`,
     });
   }
   await contract.save();

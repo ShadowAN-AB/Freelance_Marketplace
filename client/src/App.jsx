@@ -77,6 +77,7 @@ export default function App() {
                 <Route path="/app/messages/:conversationId" element={<MessagesPage />} />
                 <Route path="/app/notifications" element={<NotificationsPage />} />
                 <Route path="/app/work/:id/invoice" element={<InvoicePage />} />
+                <Route path="/app/work/:id" element={<WorkPage />} />
                 <Route path="/app/work" element={<WorkPage />} />
                 <Route path="/app/projects/new" element={<RoleRoute roles={['client']}><PostProjectPage /></RoleRoute>} />
                 <Route path="/app/projects/:id/edit" element={<RoleRoute roles={['client']}><PostProjectPage /></RoleRoute>} />

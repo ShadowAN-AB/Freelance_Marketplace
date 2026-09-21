@@ -2,6 +2,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
+import { pendingWorkCount } from '../lib/format'
 
 export function PublicNav() {
   const { user, logout } = useAuth()
@@ -101,6 +102,13 @@ export function AppShell({ children }) {
     queryFn: async () => (await api.get('/notifications')).data,
     refetchInterval: 20000,
   })
+  const contracts = useQuery({
+    queryKey: ['contracts-me'],
+    queryFn: async () => (await api.get('/contracts/me', { params: { limit: 50 } })).data,
+    refetchInterval: 30000,
+    enabled: user.role !== 'admin',
+  })
+  const workBadge = pendingWorkCount(contracts.data?.data || [], user.role)
   return (
     <div className="min-h-svh md:grid md:grid-cols-[250px_1fr]">
       <aside className="border-b-2 border-ink/10 bg-ink text-white md:border-b-0 md:border-r-0">
@@ -132,6 +140,15 @@ export function AppShell({ children }) {
               ) : null}
               {href === '/app/notifications' && alerts.data?.unread ? (
                 <CountBadge count={alerts.data.unread} />
+              ) : null}
+              {href === '/app/work' && workBadge ? (
+                <span
+                  className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-saffron px-1.5 text-[11px] text-ink"
+                  aria-live="polite"
+                  aria-label={`${workBadge} contracts need action`}
+                >
+                  {workBadge}
+                </span>
               ) : null}
             </NavLink>
           ))}

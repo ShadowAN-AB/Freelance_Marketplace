@@ -483,21 +483,21 @@ async function seed() {
       type: 'work_submitted',
       title: 'Milestone submitted',
       body: 'Aisha Khan submitted Scan MVP on Mobile inventory companion app',
-      link: '/app/work',
+      link: `/app/work/${inventoryContract._id}`,
     },
     {
       userId: priya._id,
       type: 'work_submitted',
       title: 'Hours logged',
       body: 'Aisha Khan logged 4h on Warehouse Node pairing desk',
-      link: '/app/work',
+      link: `/app/work/${hourlyContract._id}`,
     },
     {
       userId: aisha._id,
       type: 'proposal_accepted',
       title: 'Proposal accepted',
       body: 'You were hired for Mobile inventory companion app',
-      link: '/app/work',
+      link: `/app/work/${inventoryContract._id}`,
     },
   ]);
 

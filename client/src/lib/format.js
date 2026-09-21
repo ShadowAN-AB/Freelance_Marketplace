@@ -87,3 +87,35 @@ export function profileCompleteness(user) {
   const filled = checks.filter(Boolean).length
   return checks.length ? Math.round((100 * filled) / checks.length) : 0
 }
+
+export function escrowProgress(contract, payment) {
+  const amount = payment?.amount || contract?.amount || 0
+  const released =
+    typeof payment?.releasedAmount === 'number' && payment.releasedAmount > 0
+      ? payment.releasedAmount
+      : payment?.status === 'released'
+        ? amount
+        : 0
+  const percent = amount ? Math.min(100, Math.round((100 * released) / amount)) : 0
+  const slices = contract?.milestones || []
+  return {
+    amount,
+    released,
+    percent,
+    slices: slices.length,
+    releasedSlices: slices.filter((m) => m.status === 'released').length,
+  }
+}
+
+export function pendingWorkCount(contracts = [], role) {
+  return contracts.filter((c) => {
+    if (c.status !== 'active') return false
+    if (role === 'freelancer') {
+      return Boolean(c.revisionNote) || (c.milestones || []).some((m) => m.revisionNote && m.status === 'pending')
+    }
+    return (
+      (c.milestones || []).some((m) => m.status === 'submitted') ||
+      (c.timeEntries || []).some((t) => t.status === 'pending')
+    )
+  }).length
+}

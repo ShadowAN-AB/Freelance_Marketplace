@@ -165,7 +165,7 @@ const acceptProposal = asyncHandler(async (req, res) => {
     type: 'proposal_accepted',
     title: 'Proposal accepted',
     body: `You were hired for ${project.title}`,
-    link: `/app/work`,
+    link: `/app/work/${contract._id}`,
   });
   const hired = await require('../models/User').findById(proposal.freelancerId).select('email');
   if (hired?.email) {

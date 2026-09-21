@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { errorMessage, inr, pricingLabel, formatRelative, formatDue, profileCompleteness } from './format'
+import { errorMessage, inr, pricingLabel, formatRelative, formatDue, profileCompleteness, escrowProgress, pendingWorkCount } from './format'
 
 describe('format helpers', () => {
   it('reads API error messages', () => {
@@ -39,5 +39,20 @@ describe('format helpers', () => {
       })
     ).toBe(100)
     expect(profileCompleteness({ role: 'client', name: 'Priya' })).toBe(20)
+  })
+
+  it('computes escrow progress and pending work', () => {
+    expect(
+      escrowProgress(
+        { amount: 96000, milestones: [{ status: 'released' }, { status: 'pending' }] },
+        { amount: 96000, releasedAmount: 36000, status: 'held' }
+      )
+    ).toEqual({ amount: 96000, released: 36000, percent: 38, slices: 2, releasedSlices: 1 })
+    expect(
+      pendingWorkCount(
+        [{ status: 'active', milestones: [{ status: 'submitted' }], timeEntries: [] }],
+        'client'
+      )
+    ).toBe(1)
   })
 })

@@ -146,7 +146,7 @@ function FreelancerDash() {
           <ul className="mt-3 space-y-2">
             {reminders.map((c) => (
               <li key={c._id} className="rounded-2xl border-2 border-saffron/50 bg-white p-4">
-                <Link to="/app/work" className="font-display text-2xl">{c.projectId?.title}</Link>
+                <Link to={`/app/work/${c._id}`} className="font-display text-2xl">{c.projectId?.title}</Link>
                 <p className="text-sm text-muted">Deadline {formatDate(c.projectId?.deadline)}</p>
               </li>
             ))}
@@ -228,7 +228,7 @@ function ClientDash() {
               const next = submitted[0] || (c.milestones || []).find((m) => m.status === 'pending')
               return (
                 <li key={c._id} className="rounded-2xl border-2 border-ink/10 bg-white p-4">
-                  <Link to="/app/work" className="font-display text-2xl">{c.projectId?.title || 'Contract'}</Link>
+                  <Link to={`/app/work/${c._id}`} className="font-display text-2xl">{c.projectId?.title || 'Contract'}</Link>
                   <p className="text-sm text-muted">
                     {submitted.length ? `Ready to release · ${submitted[0].title}` : next ? `Next · ${next.title}` : 'Open Active work to approve or release'}
                   </p>

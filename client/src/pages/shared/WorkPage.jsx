@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
 import api from '../../services/api'
 import { Button, EmptyState, Field, Input, Spinner, StatusBadge, Textarea } from '../../components/ui/Primitives'
-import { formatDate, formatRelative, inr, errorMessage } from '../../lib/format'
+import { formatDate, formatRelative, inr, errorMessage, escrowProgress } from '../../lib/format'
 
 function activityItems(contract, payment) {
   const items = []
@@ -38,6 +38,7 @@ function escrowLabel(payment) {
 
 export default function WorkPage() {
   const { user } = useAuth()
+  const { id } = useParams()
   const qc = useQueryClient()
   const [status, setStatus] = useState('all')
   const { data, isLoading } = useQuery({
@@ -52,7 +53,6 @@ export default function WorkPage() {
         })
       ).data,
   })
-  if (isLoading) return <Spinner />
   const list = (data?.data || []).filter((c) => {
     if (status !== 'submitted') return true
     return (
@@ -60,6 +60,12 @@ export default function WorkPage() {
       (c.workSubmittedAt || (c.milestones || []).some((m) => m.status === 'submitted'))
     )
   })
+  useEffect(() => {
+    if (!id) return undefined
+    const node = document.getElementById(`contract-${id}`)
+    node?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [id, list.length])
+  if (isLoading) return <Spinner />
   return (
     <div>
       <h1 className="font-display text-4xl">{user.role === 'client' ? 'Hired work' : 'Active work'}</h1>
@@ -70,12 +76,12 @@ export default function WorkPage() {
           ['submitted', 'Submitted'],
           ['completed', 'Completed'],
           ['cancelled', 'Cancelled'],
-        ].map(([id, label]) => (
+        ].map(([chip, label]) => (
           <button
-            key={id}
+            key={chip}
             type="button"
-            onClick={() => setStatus(id)}
-            className={`rounded-full px-3 py-1 text-sm font-bold ${status === id ? 'bg-coral text-white' : 'border-2 border-ink/10 bg-white'}`}
+            onClick={() => setStatus(chip)}
+            className={`rounded-full px-3 py-1 text-sm font-bold ${status === chip ? 'bg-coral text-white' : 'border-2 border-ink/10 bg-white'}`}
           >
             {label}
           </button>
@@ -87,6 +93,7 @@ export default function WorkPage() {
           <ContractCard
             key={c._id}
             contract={c}
+            focused={c._id === id}
             onChange={() => {
               qc.invalidateQueries({ queryKey: ['contracts-me'] })
               qc.invalidateQueries({ queryKey: ['contract', c._id] })
@@ -98,7 +105,7 @@ export default function WorkPage() {
   )
 }
 
-function ContractCard({ contract, onChange }) {
+function ContractCard({ contract, onChange, focused }) {
   const { user } = useAuth()
   const toast = useToast()
   const [rating, setRating] = useState(5)
@@ -175,6 +182,7 @@ function ContractCard({ contract, onChange }) {
     onError: (err) => setError(errorMessage(err)),
   })
   const payment = detail.data?.payment
+  const progress = escrowProgress(live, payment)
   const alreadyReviewed = (detail.data?.reviews || []).some((r) => r.reviewerId === user._id || r.reviewerId?._id === user._id)
   const deliverables = live.deliverables || []
   const submitted = Boolean(live.workSubmittedAt)
@@ -224,7 +232,10 @@ function ContractCard({ contract, onChange }) {
   }
 
   return (
-    <li className="rounded-2xl border-2 border-ink/10 bg-white p-5">
+    <li
+      id={`contract-${contract._id}`}
+      className={`rounded-2xl border-2 bg-white p-5 ${focused ? 'border-coral shadow-[6px_6px_0_rgba(255,77,46,0.18)]' : 'border-ink/10'}`}
+    >
       <div className="flex justify-between gap-3">
         <h2 className="font-display text-2xl">{live.projectId?.title}</h2>
         <StatusBadge status={live.status} />
@@ -234,6 +245,17 @@ function ContractCard({ contract, onChange }) {
         {hourly ? ` · ${inr(live.hourlyRate)}/hr cap` : ''}
       </p>
       {payment ? <p className="mt-1 text-sm">Escrow: {escrowLabel(payment)}</p> : null}
+      {progress.amount ? (
+        <div className="mt-3">
+          <div className="h-2 overflow-hidden rounded-full bg-ink/10">
+            <div className="h-full bg-teal" style={{ width: `${progress.percent}%` }} />
+          </div>
+          <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-muted">
+            {inr(progress.released)} / {inr(progress.amount)} released
+            {progress.slices >= 2 ? ` · ${progress.releasedSlices} of ${progress.slices} slices` : ''}
+          </p>
+        </div>
+      ) : null}
       {live.status === 'completed' || live.status === 'cancelled' ? (
         <Link to={`/app/work/${live._id}/invoice`} className="mt-2 inline-block text-sm font-bold text-teal">Invoice</Link>
       ) : null}
