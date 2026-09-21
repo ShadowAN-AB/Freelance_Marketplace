@@ -616,4 +616,33 @@ describe('FreelanceHub API', () => {
     assert.match(csv.headers['content-type'], /text\/csv/);
     assert.match(csv.text, /title,status,amount,released,held/);
   });
+
+  it('duplicates an owned project as a fresh open listing', async () => {
+    const client = await register('client', 'dup-client@test.dev');
+    const other = await register('client', 'dup-other@test.dev');
+    const created = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Brand site for a cafe group',
+        description: 'Need a React brochure site with a menu, locations, and a booking form.',
+        category: 'Web Development',
+        skills: ['react'],
+        budgetMin: 10000,
+        budgetMax: 20000,
+        deadline: new Date(Date.now() + 14 * 86400000).toISOString(),
+      })
+      .expect(201);
+    await request(app)
+      .post(`/api/projects/${created.body.project._id}/duplicate`)
+      .set('Authorization', `Bearer ${other.body.token}`)
+      .expect(403);
+    const copy = await request(app)
+      .post(`/api/projects/${created.body.project._id}/duplicate`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(201);
+    assert.match(copy.body.project.title, /^Copy of /);
+    assert.equal(copy.body.project.status, 'open');
+    assert.notEqual(copy.body.project._id, created.body.project._id);
+  });
 });

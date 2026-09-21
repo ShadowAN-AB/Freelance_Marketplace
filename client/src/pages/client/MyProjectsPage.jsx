@@ -14,6 +14,10 @@ export default function MyProjectsPage() {
     mutationFn: (id) => api.post(`/projects/${id}/cancel`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-projects'] }),
   })
+  const duplicate = useMutation({
+    mutationFn: (id) => api.post(`/projects/${id}/duplicate`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-projects'] }),
+  })
   if (isLoading) return <Spinner />
   const list = data?.data || []
   return (
@@ -35,6 +39,7 @@ export default function MyProjectsPage() {
             </div>
             <div className="flex items-center gap-3">
               <StatusBadge status={p.status} />
+              <button className="text-sm font-semibold" type="button" onClick={() => duplicate.mutate(p._id)}>Duplicate</button>
               {p.status === 'open' ? (
                 <>
                   <Link to={`/app/projects/${p._id}/proposals`} className="text-sm font-semibold text-teal">Proposals</Link>

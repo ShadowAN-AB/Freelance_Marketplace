@@ -257,6 +257,29 @@ const inviteToBid = asyncHandler(async (req, res) => {
   res.status(201).json({ project, invited: true });
 });
 
+const duplicateProject = asyncHandler(async (req, res) => {
+  const source = await Project.findById(req.params.id);
+  if (!source) throw new ApiError(404, 'Project not found');
+  if (source.clientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'Only the owner can duplicate this project');
+  }
+  const title = `Copy of ${source.title}`.slice(0, 140);
+  const project = await Project.create({
+    clientId: req.user._id,
+    title,
+    description: source.description,
+    category: source.category,
+    skills: source.skills,
+    budgetMin: source.budgetMin,
+    budgetMax: source.budgetMax,
+    deadline: new Date(Date.now() + 14 * 86400000),
+    pricingType: source.pricingType || 'fixed',
+    milestones: (source.milestones || []).map((m) => ({ title: m.title, amount: m.amount })),
+    status: 'open',
+  });
+  res.status(201).json({ project });
+});
+
 async function withProposalCounts(projects) {
   const ids = projects.map((p) => p._id);
   if (!ids.length) return projects;
@@ -282,6 +305,7 @@ module.exports = {
   projectMatches,
   recommendedProjects,
   inviteToBid,
+  duplicateProject,
   createSchema,
   updateSchema,
   inviteSchema,

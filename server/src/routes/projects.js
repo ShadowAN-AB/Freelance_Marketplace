@@ -9,6 +9,7 @@ const {
   projectMatches,
   recommendedProjects,
   inviteToBid,
+  duplicateProject,
   createSchema,
   updateSchema,
   inviteSchema,
@@ -25,6 +26,7 @@ router.get('/:id', optionalAuth, getProject);
 router.post('/', protect, authorize('client'), requireVerified, validate(createSchema), createProject);
 router.patch('/:id', protect, authorize('client'), requireVerified, validate(updateSchema), updateProject);
 router.post('/:id/cancel', protect, authorize('client'), requireVerified, cancelProject);
+router.post('/:id/duplicate', protect, authorize('client'), requireVerified, duplicateProject);
 router.post('/:id/invites', protect, authorize('client'), requireVerified, validate(inviteSchema), inviteToBid);
 router.get('/:id/matches', protect, authorize('client', 'admin'), projectMatches);
 
