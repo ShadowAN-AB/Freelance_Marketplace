@@ -36,6 +36,9 @@ function attachSocket(httpServer, app) {
     onlineUsers.set(userId, socket.id);
     socket.join(`user:${userId}`);
     io.emit('presence:update', { userId, online: true });
+    for (const id of onlineUsers.keys()) {
+      socket.emit('presence:update', { userId: id, online: true });
+    }
 
     socket.on('conversation:join', (conversationId) => {
       socket.join(`conversation:${conversationId}`);
