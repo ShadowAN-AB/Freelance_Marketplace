@@ -21,8 +21,8 @@ cd server && npm install && npm run seed && npm run dev
 cd client && npm install && npm run dev
 ```
 
-- App: http://localhost:5173
-- API health: http://localhost:5000/health
+- App: http://localhost:5178
+- API health: http://localhost:5001/health
 
 Demo password for every seeded account: `Password123!`
 

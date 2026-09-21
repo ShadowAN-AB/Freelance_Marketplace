@@ -5,12 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    port: 5173,
+    port: 5178,
     proxy: {
-      '/api': 'http://localhost:5000',
-      '/uploads': 'http://localhost:5000',
-      '/socket.io': { target: 'http://localhost:5000', ws: true },
-      '/health': 'http://localhost:5000',
+      '/api': 'http://localhost:5001',
+      '/uploads': 'http://localhost:5001',
+      '/socket.io': { target: 'http://localhost:5001', ws: true },
+      '/health': 'http://localhost:5001',
     },
   },
 })
