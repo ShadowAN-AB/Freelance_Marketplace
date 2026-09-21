@@ -2,7 +2,10 @@
 
 A MERN freelance marketplace: clients post projects, freelancers submit proposals, both sides chat, complete work through escrow, and leave reviews.
 
-Repository: [github.com/ShadowAN-AB/Freelance_Marketplace](https://github.com/ShadowAN-AB/Freelance_Marketplace)
+- Live client (Vercel): [freelance-marketplace-one-dusky.vercel.app](https://freelance-marketplace-one-dusky.vercel.app/)
+- Repository: [github.com/ShadowAN-AB/Freelance_Marketplace](https://github.com/ShadowAN-AB/Freelance_Marketplace)
+
+The Vercel site is the React app only. Sign-in, hire, chat, and escrow need the API (run it locally, or host Express + Mongo separately).
 
 ## Stack
 
@@ -18,32 +21,54 @@ Local `npm run dev` is one API process. `docker compose up` splits that process 
 
 ## Vercel
 
-Vercel can host the **React client**, not Express, MongoDB, or Socket.IO. Importing this repo with no Root Directory used to 404 because the app lives in `client/`, not the repo root.
+Live client: [https://freelance-marketplace-one-dusky.vercel.app/](https://freelance-marketplace-one-dusky.vercel.app/)
 
-After this repo’s `vercel.json` is on `main`, the Vite app should build. Login and hire still need an API:
+Vercel hosts the **React client**, not Express, MongoDB, or Socket.IO. Root `vercel.json` builds `client/` and serves the SPA. Login and hire still need an API:
 
 1. Put MongoDB on Atlas (or any hosted Mongo).
-2. Run the Express app on Railway, Render, or Fly (`cd server && npm start`) with `CLIENT_URL=https://your-app.vercel.app` and `MONGO_URI=...`.
+2. Run the Express app on Railway, Render, or Fly (`cd server && npm start`) with `CLIENT_URL=https://freelance-marketplace-one-dusky.vercel.app` and `MONGO_URI=...`.
 3. In the Vercel project, set `VITE_API_URL` to that API origin (no trailing slash) and redeploy.
 
-Until `VITE_API_URL` is set, the Vercel site can render, but `/api` calls have nowhere to go.
+Until `VITE_API_URL` is set, the Vercel site can render, but `/api` calls have nowhere to go. Use localhost for a full demo.
 
 Do not point Vercel at `server/`. Serverless functions will not run this Socket.IO + disk-upload API.
 
-## Local setup
+## Run on localhost
+
+You need Node.js 20+, npm, and MongoDB listening at `mongodb://127.0.0.1:27017` (native `mongod` or `docker compose up -d mongo`).
+
+1. Clone and copy env (once):
 
 ```bash
+git clone https://github.com/ShadowAN-AB/Freelance_Marketplace.git
+cd Freelance_Marketplace
 cp .env.example server/.env
-cd server && npm install && npm run seed && npm run dev
-cd client && npm install && npm run dev
 ```
 
-MongoDB must be running at `MONGO_URI` (native `mongod` or `docker compose up -d mongo`).
+`CLIENT_URL` in `server/.env` must stay `http://localhost:5178`. The API will not start without it.
 
-- App: http://localhost:5178 (also http://127.0.0.1:5178)
-- API health: http://localhost:5001/health
+2. Terminal 1 — API (port 5001):
 
-`CLIENT_URL` is required. The API will not start without it.
+```bash
+cd server
+npm install
+npm run seed
+npm run dev
+```
+
+Wait until `http://localhost:5001/health` returns `{"ok":true,...}`. Seed only when you want demo accounts; skip it if the database is already loaded.
+
+3. Terminal 2 — client (port 5178):
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+4. Open **http://localhost:5178** in the browser. Use `localhost`, not `127.0.0.1`, so cookies match `CLIENT_URL`.
+
+Vite proxies `/api`, `/uploads`, and Socket.IO to the API, so you do not set `VITE_API_URL` for local work.
 
 Demo password for every seeded account: `Password123!`
 
