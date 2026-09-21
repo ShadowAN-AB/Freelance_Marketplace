@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "e2e": "playwright test",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\""
   },
@@ -28,6 +29,7 @@
     "tailwindcss": "^4.1.13",
     "vite": "^6.3.5",
     "vitest": "^3.2.4",
+    "@playwright/test": "^1.55.0",
     "eslint": "^8.57.1",
     "prettier": "^3.5.3"
   }

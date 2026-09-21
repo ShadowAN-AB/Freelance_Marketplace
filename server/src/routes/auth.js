@@ -8,6 +8,7 @@ const {
   refresh,
   changePassword,
   verifyEmail,
+  resendVerify,
   forgotPassword,
   resetPassword,
   registerSchema,
@@ -39,6 +40,7 @@ router.post('/logout', optionalAuth, logout);
 router.get('/me', protect, me);
 router.patch('/password', protect, validate(passwordSchema), changePassword);
 router.get('/verify-email', verifyEmail);
+router.post('/resend-verify', protect, resendVerify);
 router.post('/forgot-password', authLimiter, validate(forgotSchema), forgotPassword);
 router.post('/reset-password', authLimiter, validate(resetSchema), resetPassword);
 

@@ -41,3 +41,17 @@ jobs:
           npm run lint
           npm test
           npm run build
+      - name: Playwright smoke
+        env:
+          NODE_ENV: test
+          PORT: 5001
+          CLIENT_URL: http://localhost:5178
+          JWT_SECRET: ci-jwt-secret-please-use-32-chars
+          MONGO_URI: mongodb://127.0.0.1:27017/freelancehub_e2e
+          LOG_LEVEL: silent
+          SKIP_EMAIL_VERIFY: true
+        run: |
+          npm --prefix server start &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:5001/health && break; sleep 1; done
+          npx --prefix client playwright install --with-deps chromium
+          npm --prefix client run e2e

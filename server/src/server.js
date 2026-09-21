@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const { connectDb } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const { parseCookies } = require('./middleware/cookies');
+const { csrfProtect } = require('./middleware/csrf');
 const { attachSocket } = require('./services/socket');
 const { requestId, logger } = require('./services/logger');
 const { clientUrl, requireEnv, isProd } = require('./config/env');
@@ -34,6 +35,7 @@ function createApp() {
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors({ origin, credentials: true }));
   app.use(parseCookies);
+  app.use(csrfProtect);
   app.post(
     '/api/payments/webhook',
     express.raw({ type: 'application/json' }),

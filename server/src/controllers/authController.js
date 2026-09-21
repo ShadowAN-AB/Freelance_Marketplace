@@ -168,6 +168,21 @@ const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
+const resendVerify = asyncHandler(async (req, res) => {
+  if (req.user.emailVerified) throw new ApiError(400, 'Email is already verified');
+  const user = await User.findById(req.user._id).select('+emailVerifyToken');
+  const raw = randomToken();
+  user.emailVerifyToken = hashToken(raw);
+  await user.save();
+  const link = `${clientUrl()}/verify-email?token=${raw}`;
+  await sendMail({
+    to: user.email,
+    subject: 'Verify your FreelanceHub email',
+    text: `Confirm your account: ${link}`,
+  });
+  res.json({ ok: true });
+});
+
 const resetPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     passwordResetToken: hashToken(req.body.token),
@@ -190,6 +205,7 @@ module.exports = {
   refresh,
   changePassword,
   verifyEmail,
+  resendVerify,
   forgotPassword,
   resetPassword,
   registerSchema,

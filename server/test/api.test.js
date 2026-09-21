@@ -261,4 +261,235 @@ describe('FreelanceHub API', () => {
     assert.ok(details.body.myProposal);
     assert.equal(details.body.myProposal.status, 'pending');
   });
+
+  it('releases milestone amounts incrementally', async () => {
+    const client = await register('client', 'ms-client@test.dev');
+    const freelancer = await register('freelancer', 'ms-free@test.dev');
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Two-slice brand website',
+        description: 'A brochure site with discovery and a build slice that must ship together.',
+        category: 'Web Development',
+        skills: ['react'],
+        budgetMin: 10000,
+        budgetMax: 20000,
+        deadline: new Date(Date.now() + 20 * 86400000).toISOString(),
+        pricingType: 'fixed',
+        milestones: [
+          { title: 'Discovery', amount: 8000 },
+          { title: 'Build', amount: 12000 },
+        ],
+      })
+      .expect(201);
+    const proposal = await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'I can deliver this in two clear slices with weekly check-ins.',
+        bidAmount: 20000,
+        estimatedDays: 16,
+      })
+      .expect(201);
+    const hired = await request(app)
+      .post(`/api/proposals/${proposal.body.proposal._id}/accept`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(hired.body.contract.milestones.length, 2);
+    const contractId = hired.body.contract._id;
+    const first = hired.body.contract.milestones[0];
+    await request(app)
+      .post(`/api/contracts/${contractId}/milestones/${first._id}/submit-work`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .expect(200);
+    const released = await request(app)
+      .post(`/api/contracts/${contractId}/milestones/${first._id}/release`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(released.body.payment.releasedAmount, 8000);
+    assert.equal(released.body.payment.status, 'held');
+  });
+
+  it('approves hourly time against the escrow cap', async () => {
+    const client = await register('client', 'hr-client@test.dev');
+    const freelancer = await register('freelancer', 'hr-free@test.dev');
+    await request(app)
+      .patch('/api/users/me')
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({ freelancerProfile: { hourlyRate: 1000, title: 'Engineer', skills: ['node.js'] } })
+      .expect(200);
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Hourly API pairing sprint',
+        description: 'Need pairing on a Node API for one week with a hard escrow cap.',
+        category: 'Web Development',
+        skills: ['node.js'],
+        budgetMin: 2000,
+        budgetMax: 5000,
+        deadline: new Date(Date.now() + 10 * 86400000).toISOString(),
+        pricingType: 'hourly',
+      })
+      .expect(201);
+    const proposal = await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'I pair well on Node APIs and can start immediately this sprint.',
+        bidAmount: 5000,
+        estimatedDays: 5,
+      })
+      .expect(201);
+    const hired = await request(app)
+      .post(`/api/proposals/${proposal.body.proposal._id}/accept`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(hired.body.contract.pricingType, 'hourly');
+    assert.equal(hired.body.payment.amount, 5000);
+    const contractId = hired.body.contract._id;
+    const logged = await request(app)
+      .post(`/api/contracts/${contractId}/time-entries`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({ hours: 2, note: 'API pairing', date: new Date().toISOString() })
+      .expect(201);
+    const entry = logged.body.contract.timeEntries[0];
+    const approved = await request(app)
+      .post(`/api/contracts/${contractId}/time-entries/${entry._id}/approve`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    const pay = await request(app)
+      .get(`/api/contracts/${contractId}`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    assert.equal(pay.body.payment.releasedAmount, 2000);
+    assert.equal(approved.body.contract.timeEntries[0].status, 'approved');
+  });
+
+  it('accepts a chat attachment over HTTP', async () => {
+    const client = await register('client', 'chat-client@test.dev');
+    const freelancer = await register('freelancer', 'chat-free@test.dev');
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Chat file handshake project',
+        description: 'A small project used only to open a conversation for attachment tests.',
+        category: 'Writing',
+        skills: ['writing'],
+        budgetMin: 4000,
+        budgetMax: 6000,
+        deadline: new Date(Date.now() + 12 * 86400000).toISOString(),
+      })
+      .expect(201);
+    const proposal = await request(app)
+      .post(`/api/projects/${project.body.project._id}/proposals`)
+      .set('Authorization', `Bearer ${freelancer.body.token}`)
+      .send({
+        coverLetter: 'Happy to share a sample document in chat after we connect.',
+        bidAmount: 5000,
+        estimatedDays: 6,
+      })
+      .expect(201);
+    await request(app)
+      .post(`/api/proposals/${proposal.body.proposal._id}/accept`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    const conv = await request(app)
+      .get('/api/conversations')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .expect(200);
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    const sent = await request(app)
+      .post(`/api/conversations/${conv.body.data[0]._id}/messages`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .attach('file', png, { filename: 'dot.png', contentType: 'image/png' })
+      .expect(201);
+    assert.ok(sent.body.message.attachment.url);
+    assert.equal(sent.body.message.attachment.originalName, 'dot.png');
+  });
+
+  it('skips CSRF when a Bearer token is present', async () => {
+    const client = await register('client', 'csrf-client@test.dev');
+    await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Bearer skip CSRF project',
+        description: 'This listing is created with a Bearer token and no CSRF header.',
+        category: 'Data',
+        skills: ['sql'],
+        budgetMin: 3000,
+        budgetMax: 7000,
+        deadline: new Date(Date.now() + 9 * 86400000).toISOString(),
+      })
+      .expect(201);
+
+    const agent = request.agent(app);
+    const cookieUser = await agent
+      .post('/api/auth/register')
+      .send({ name: 'Cookie Client', email: 'csrf-cookie@test.dev', password: 'Password123!', role: 'client' })
+      .expect(201);
+    const setCookie = cookieUser.headers['set-cookie'] || [];
+    const csrfRow = setCookie.find((c) => c.startsWith('fh_csrf='));
+    const csrf = csrfRow ? csrfRow.split(';')[0].split('=')[1] : '';
+    await agent
+      .post('/api/projects')
+      .send({
+        title: 'Missing CSRF project name',
+        description: 'Cookie-only mutating requests must send a matching CSRF header.',
+        category: 'Data',
+        skills: ['sql'],
+        budgetMin: 3000,
+        budgetMax: 7000,
+        deadline: new Date(Date.now() + 9 * 86400000).toISOString(),
+      })
+      .expect(403);
+    await agent
+      .post('/api/projects')
+      .set('X-CSRF-Token', csrf)
+      .send({
+        title: 'Valid CSRF cookie project',
+        description: 'Cookie-only mutating requests succeed when the CSRF header matches.',
+        category: 'Data',
+        skills: ['sql'],
+        budgetMin: 3000,
+        budgetMax: 7000,
+        deadline: new Date(Date.now() + 9 * 86400000).toISOString(),
+      })
+      .expect(201);
+  });
+
+  it('forbids invite-to-bid from a non-owner', async () => {
+    const client = await register('client', 'inv-client@test.dev');
+    const other = await register('client', 'inv-other@test.dev');
+    const freelancer = await register('freelancer', 'inv-free@test.dev');
+    const project = await request(app)
+      .post('/api/projects')
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({
+        title: 'Invite only research brief',
+        description: 'A research brief that should only accept invites from its owner.',
+        category: 'Writing',
+        skills: ['research'],
+        budgetMin: 4000,
+        budgetMax: 8000,
+        deadline: new Date(Date.now() + 11 * 86400000).toISOString(),
+      })
+      .expect(201);
+    await request(app)
+      .post(`/api/projects/${project.body.project._id}/invites`)
+      .set('Authorization', `Bearer ${other.body.token}`)
+      .send({ freelancerId: freelancer.body.user._id })
+      .expect(403);
+    await request(app)
+      .post(`/api/projects/${project.body.project._id}/invites`)
+      .set('Authorization', `Bearer ${client.body.token}`)
+      .send({ freelancerId: freelancer.body.user._id })
+      .expect(201);
+  });
 });

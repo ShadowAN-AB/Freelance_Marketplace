@@ -21,6 +21,11 @@ function shouldSkipRefresh(url = '') {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('fh_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  const method = (config.method || 'get').toLowerCase()
+  if (!['get', 'head', 'options'].includes(method) && typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|; )fh_csrf=([^;]*)/)
+    if (match) config.headers['X-CSRF-Token'] = decodeURIComponent(match[1])
+  }
   return config
 })
 

@@ -42,6 +42,26 @@ export default function SettingsPage() {
       <h1 className="font-display text-4xl">Settings</h1>
       <p className="mt-4 text-muted">Signed in as {user.email}. Admin accounts are seeded, not self-registered.</p>
 
+      {!user.emailVerified ? (
+        <div className="mt-6 rounded-2xl border-2 border-saffron bg-saffron/20 p-4">
+          <p className="font-semibold">Your email is not verified.</p>
+          <button
+            type="button"
+            className="mt-2 text-sm font-bold text-teal"
+            onClick={async () => {
+              try {
+                await api.post('/auth/resend-verify')
+                toast.push('Verification email sent')
+              } catch (err) {
+                setError(errorMessage(err))
+              }
+            }}
+          >
+            Resend verification email
+          </button>
+        </div>
+      ) : null}
+
       <form className="mt-8 space-y-3 rounded-2xl border-2 border-ink/10 bg-white p-5" onSubmit={changePassword}>
         <h2 className="font-display text-2xl">Change password</h2>
         <ErrorText error={error} />

@@ -23,6 +23,14 @@ const authorize =
     next();
   };
 
+const requireVerified = (req, _res, next) => {
+  if (process.env.SKIP_EMAIL_VERIFY === 'true' || process.env.NODE_ENV === 'test') return next();
+  if (req.user && !req.user.emailVerified) {
+    throw new ApiError(403, 'Verify your email to continue');
+  }
+  next();
+};
+
 const optionalAuth = asyncHandler(async (req, _res, next) => {
   const token = readAccessToken(req);
   if (!token) return next();
@@ -36,4 +44,4 @@ const optionalAuth = asyncHandler(async (req, _res, next) => {
   next();
 });
 
-module.exports = { protect, authorize, optionalAuth };
+module.exports = { protect, authorize, optionalAuth, requireVerified };

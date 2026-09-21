@@ -30,9 +30,9 @@ function hashToken(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
 
-function cookieOpts(maxAgeMs) {
+function cookieOpts(maxAgeMs, httpOnly = true) {
   return {
-    httpOnly: true,
+    httpOnly,
     sameSite: 'lax',
     secure: isProd(),
     path: '/',
@@ -43,11 +43,14 @@ function cookieOpts(maxAgeMs) {
 function setAuthCookies(res, { access, refresh }) {
   res.cookie('fh_access', access, cookieOpts(7 * 24 * 60 * 60 * 1000));
   res.cookie('fh_refresh', refresh, cookieOpts(30 * 24 * 60 * 60 * 1000));
+  const csrf = crypto.randomBytes(24).toString('hex');
+  res.cookie('fh_csrf', csrf, cookieOpts(7 * 24 * 60 * 60 * 1000, false));
 }
 
 function clearAuthCookies(res) {
   res.clearCookie('fh_access', { path: '/' });
   res.clearCookie('fh_refresh', { path: '/' });
+  res.clearCookie('fh_csrf', { path: '/' });
 }
 
 function readAccessToken(req) {
