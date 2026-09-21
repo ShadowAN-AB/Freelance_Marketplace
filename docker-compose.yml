@@ -9,5 +9,30 @@ services:
     environment:
       MONGO_INITDB_DATABASE: freelancehub
 
+  api:
+    build: ./server
+    container_name: freelancehub-api
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      CLIENT_URL: http://localhost:8080
+      MONGO_URI: mongodb://mongo:27017/freelancehub
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-compose-please-32chars}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 30d
+      SKIP_EMAIL_VERIFY: "true"
+    depends_on:
+      - mongo
+
+  web:
+    build: ./client
+    container_name: freelancehub-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
 volumes:
   mongo_data:

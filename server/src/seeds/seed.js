@@ -13,6 +13,7 @@ const Message = require('../models/Message');
 const Review = require('../models/Review');
 const Notification = require('../models/Notification');
 const Report = require('../models/Report');
+const AuditLog = require('../models/AuditLog');
 
 const PASSWORD = 'Password123!';
 
@@ -28,10 +29,15 @@ async function reset() {
     Review.deleteMany({}),
     Notification.deleteMany({}),
     Report.deleteMany({}),
+    AuditLog.deleteMany({}),
   ]);
 }
 
 async function seed() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('Refusing to seed in production');
+    process.exit(1);
+  }
   await connectDb();
   await reset();
   const password = await bcrypt.hash(PASSWORD, 12);
@@ -75,6 +81,7 @@ async function seed() {
         skills: ['react', 'node.js', 'mongodb', 'express', 'javascript'],
         hourlyRate: 1800,
         availability: 'available',
+        verifiedSkills: ['react', 'node.js'],
         portfolio: [
           { title: 'Fleet dashboard', url: 'https://example.com', imageUrl: '' },
           { title: 'Checkout API', url: 'https://example.com', imageUrl: '' },
@@ -131,6 +138,8 @@ async function seed() {
       reviewCount: 1,
     },
   ]);
+
+  await User.updateMany({}, { emailVerified: true });
 
   const deadline = (days) => new Date(Date.now() + days * 86400000);
 

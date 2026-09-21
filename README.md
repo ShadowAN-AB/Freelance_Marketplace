@@ -1,6 +1,6 @@
 # FreelanceHub
 
-A MERN freelance marketplace: clients post projects, freelancers submit proposals, both sides chat, complete work through simulated escrow, and leave reviews.
+A MERN freelance marketplace: clients post projects, freelancers submit proposals, both sides chat, complete work through escrow, and leave reviews.
 
 Repository: [github.com/ShadowAN-AB/Freelance_Marketplace](https://github.com/ShadowAN-AB/Freelance_Marketplace)
 
@@ -9,20 +9,25 @@ Repository: [github.com/ShadowAN-AB/Freelance_Marketplace](https://github.com/Sh
 | Layer | Tech |
 | --- | --- |
 | Client | React 19, Vite, Tailwind CSS, React Router, TanStack Query, Axios, Socket.IO client, Recharts |
-| Server | Node.js, Express, Mongoose, JWT, bcrypt, Multer, Socket.IO, Zod |
-| Database | MongoDB 7 (Docker Compose) |
+| Server | Node.js, Express, Mongoose, JWT (httpOnly cookies + refresh), bcrypt, Multer, Socket.IO, Zod |
+| Database | MongoDB 7 |
+
+Payments, object storage, Redis presence, and SMTP are optional env-based integrations. The demo still uses simulated escrow if they are unset.
 
 ## Local setup
 
 ```bash
-docker compose up -d
 cp .env.example server/.env
 cd server && npm install && npm run seed && npm run dev
 cd client && npm install && npm run dev
 ```
 
+MongoDB must be running at `MONGO_URI` (native `mongod` or `docker compose up -d mongo`).
+
 - App: http://localhost:5178
 - API health: http://localhost:5001/health
+
+`CLIENT_URL` is required. The API will not start without it.
 
 Demo password for every seeded account: `Password123!`
 
@@ -32,18 +37,29 @@ Demo password for every seeded account: `Password123!`
 | Client | priya@freelancehub.dev / arjun@freelancehub.dev |
 | Freelancer | aisha@freelancehub.dev / kabir@freelancehub.dev / meera@freelancehub.dev / leo@freelancehub.dev |
 
-## Demo walkthrough (about 10 minutes)
+## Tests and CI
 
-1. Log in as **Priya**. Open **My projects** → React dashboard → **Proposals**. Accept Aisha or wait and post a new project.
-2. Log in as **Aisha**. Open **Active work**, submit work on the inventory app. Switch back to Priya and release escrow, then leave a review.
-3. Open **Messages** on both accounts — the inventory thread is already seeded.
-4. Log in as **admin@freelancehub.dev** to see users, reports, and analytics.
+```bash
+cd server && npm test
+cd client && npm test
+```
+
+GitHub Actions runs both suites on push to `main` (Mongo service + lint + client build).
+
+## Docker
+
+```bash
+JWT_SECRET=replace-with-a-long-random-string docker compose up --build
+```
+
+Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do not run `npm run seed` against production.
 
 ## Domain rules
 
-- One proposal per freelancer per project.
-- Accepting a proposal rejects other pending bids, creates a contract, and holds simulated escrow.
-- Chat requires a proposal on that project.
+- One pending proposal per freelancer per project; a withdrawn freelancer can rebid.
+- Accepting a proposal rejects other pending bids, creates a contract, and holds escrow.
+- Either party can cancel an active contract; held escrow is refunded.
+- Chat requires a proposal on that project. Socket join is participant-checked.
 - Reviews open only after the client completes the contract.
 
 ## Layout
@@ -51,5 +67,5 @@ Demo password for every seeded account: `Password123!`
 ```
 client/   React app
 server/   Express API + Socket.IO
-docker-compose.yml   MongoDB
+docker-compose.yml   Mongo + API + web
 ```
