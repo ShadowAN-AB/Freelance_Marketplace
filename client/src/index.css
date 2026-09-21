@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+  background: #f3eee4;
+  color: #1b1814;
+}
+
+#root {
+  min-height: 100svh;
+}
