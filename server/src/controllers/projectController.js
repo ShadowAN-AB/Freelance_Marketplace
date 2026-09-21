@@ -7,7 +7,15 @@ const { paginateQuery, paginateResult } = require('../utils/paginate');
 const { normalizeSkills, matchScore } = require('../utils/skills');
 const { USER_PUBLIC_FIELDS } = require('../utils/publicUser');
 
-const CATEGORIES = Project.CATEGORIES;
+const CATEGORIES = [
+  'Web Development',
+  'Mobile',
+  'UI/UX',
+  'Data',
+  'Writing',
+  'Marketing',
+  'Other',
+];
 
 const createSchema = z.object({
   body: z.object({
@@ -46,7 +54,7 @@ const listProjects = asyncHandler(async (req, res) => {
   if (req.query.q) filter.$text = { $search: req.query.q };
   if (req.query.skill) filter.skills = new RegExp(req.query.skill, 'i');
   if (req.query.minBudget) filter.budgetMax = { $gte: Number(req.query.minBudget) };
-  if (req.query.maxBudget) filter.budgetMin = { ...(filter.budgetMin || {}), $lte: Number(req.query.maxBudget) };
+  if (req.query.maxBudget) filter.budgetMin = { $lte: Number(req.query.maxBudget) };
 
   const [data, total] = await Promise.all([
     Project.find(filter).populate(populateClient).sort({ createdAt: -1 }).skip(skip).limit(limit),
