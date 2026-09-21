@@ -20,4 +20,27 @@ const upload = multer({
   },
 });
 
-module.exports = { upload };
+const DELIVERABLE_TYPES = [
+  'application/pdf',
+  'application/zip',
+  'application/x-zip-compressed',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+];
+
+const uploadDeliverables = multer({
+  storage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const okType = DELIVERABLE_TYPES.includes(file.mimetype);
+    const okExt = ['.pdf', '.zip', '.png', '.jpg', '.jpeg', '.webp'].includes(ext);
+    if (!okType && !okExt) {
+      return cb(new ApiError(400, 'Only PDF, ZIP, PNG, JPEG, and WebP files are allowed'));
+    }
+    cb(null, true);
+  },
+});
+
+module.exports = { upload, uploadDeliverables };

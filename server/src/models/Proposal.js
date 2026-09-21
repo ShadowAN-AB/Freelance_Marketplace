@@ -13,6 +13,7 @@ const proposalSchema = new mongoose.Schema(
       default: 'pending',
       index: true,
     },
+    shortlisted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

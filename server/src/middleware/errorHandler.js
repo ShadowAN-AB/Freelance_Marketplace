@@ -16,8 +16,11 @@ function errorHandler(err, _req, res, _next) {
   if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
-  if (err.name === 'CastError') {
-    return res.status(400).json({ message: 'Invalid id' });
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'File is too large' });
+  }
+  if (err.name === 'MulterError') {
+    return res.status(400).json({ message: err.message });
   }
   const status = err.statusCode || 500;
   if (status >= 500) console.error(err);

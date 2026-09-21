@@ -48,7 +48,7 @@ const listProjectProposals = asyncHandler(async (req, res) => {
   if (!isOwner && req.user.role !== 'admin') throw new ApiError(403, 'Only the client can view all proposals');
   const proposals = await Proposal.find({ projectId: project._id })
     .populate({ path: 'freelancerId', select: USER_PUBLIC_FIELDS })
-    .sort({ createdAt: -1 });
+    .sort({ shortlisted: -1, createdAt: -1 });
   res.json({ data: proposals });
 });
 
@@ -167,6 +167,18 @@ const withdrawProposal = asyncHandler(async (req, res) => {
   res.json({ proposal });
 });
 
+const toggleShortlist = asyncHandler(async (req, res) => {
+  const proposal = await Proposal.findById(req.params.id).populate('projectId');
+  if (!proposal) throw new ApiError(404, 'Proposal not found');
+  if (proposal.projectId.clientId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, 'Only the client can shortlist a proposal');
+  }
+  if (proposal.status !== 'pending') throw new ApiError(400, 'Only pending proposals can be shortlisted');
+  proposal.shortlisted = !proposal.shortlisted;
+  await proposal.save();
+  res.json({ proposal });
+});
+
 module.exports = {
   createProposal,
   listProjectProposals,
@@ -174,5 +186,6 @@ module.exports = {
   acceptProposal,
   rejectProposal,
   withdrawProposal,
+  toggleShortlist,
   createSchema,
 };

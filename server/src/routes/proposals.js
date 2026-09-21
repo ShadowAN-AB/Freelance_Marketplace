@@ -6,6 +6,7 @@ const {
   acceptProposal,
   rejectProposal,
   withdrawProposal,
+  toggleShortlist,
   createSchema,
 } = require('../controllers/proposalController');
 const { protect, authorize } = require('../middleware/auth');
@@ -20,5 +21,6 @@ router.get('/me', protect, authorize('freelancer'), myProposals);
 router.post('/:id/accept', protect, authorize('client'), acceptProposal);
 router.post('/:id/reject', protect, authorize('client'), rejectProposal);
 router.post('/:id/withdraw', protect, authorize('freelancer'), withdrawProposal);
+router.post('/:id/shortlist', protect, authorize('client'), toggleShortlist);
 
 module.exports = { router, projectRouter };

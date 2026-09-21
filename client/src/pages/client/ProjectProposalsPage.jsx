@@ -23,19 +23,38 @@ export default function ProjectProposalsPage() {
     mutationFn: (pid) => api.post(`/proposals/${pid}/reject`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['project-proposals', id] }),
   })
+  const shortlist = useMutation({
+    mutationFn: (pid) => api.post(`/proposals/${pid}/shortlist`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project-proposals', id] }),
+  })
   if (isLoading) return <Spinner />
-  const list = data?.data || []
+  const list = [...(data?.data || [])].sort((a, b) => Number(!!b.shortlisted) - Number(!!a.shortlisted))
   return (
     <div>
       <h1 className="font-display text-4xl">Proposals</h1>
+      <p className="mt-2 text-sm text-muted">Shortlisted proposals appear first.</p>
       {!list.length ? <div className="mt-8"><EmptyState title="No proposals yet" body="Share the project or wait for talent to bid." /></div> : null}
       <ul className="mt-6 space-y-4">
         {list.map((p) => (
-          <li key={p._id} className="rounded-xl border border-line bg-white p-5">
+          <li key={p._id} className="rounded-2xl border-2 border-ink/10 bg-white p-5">
             <div className="flex justify-between gap-3">
-              <Link to={`/freelancers/${p.freelancerId?._id}`} className="font-display text-2xl">
-                {p.freelancerId?.name}
-              </Link>
+              <div className="flex items-center gap-2">
+                {p.status === 'pending' ? (
+                  <button
+                    type="button"
+                    aria-label={p.shortlisted ? 'Remove from shortlist' : 'Shortlist proposal'}
+                    onClick={() => shortlist.mutate(p._id)}
+                    className={`text-2xl ${p.shortlisted ? 'text-saffron' : 'text-ink/20'}`}
+                  >
+                    ★
+                  </button>
+                ) : p.shortlisted ? (
+                  <span className="text-2xl text-saffron">★</span>
+                ) : null}
+                <Link to={`/freelancers/${p.freelancerId?._id}`} className="font-display text-2xl">
+                  {p.freelancerId?.name}
+                </Link>
+              </div>
               <StatusBadge status={p.status} />
             </div>
             <p className="mt-2 text-muted">{p.coverLetter}</p>
