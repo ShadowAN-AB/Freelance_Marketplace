@@ -180,7 +180,7 @@
   <div class="meta">
     <p><strong>Repository:</strong> github.com/ShadowAN-AB/Freelance_Marketplace</p>
     <p><strong>Local app:</strong> http://127.0.0.1:5178 or http://localhost:5178 &nbsp;·&nbsp; <strong>API:</strong> http://localhost:5001 &nbsp;·&nbsp; <strong>Compose web:</strong> http://localhost:8080</p>
-    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.1</p>
+    <p><strong>Document date:</strong> 21 September 2026 &nbsp;·&nbsp; Version 2.2</p>
   </div>
 </section>
 
@@ -203,6 +203,7 @@
   <li><a href="#setup">15. Local setup and demo</a></li>
   <li><a href="#ops">16. Operations and production hooks</a></li>
   <li><a href="#viva">17. Viva talking points</a></li>
+  <li><a href="#sprint">18. Presentation sprint (v2.2)</a></li>
 </ol>
 
 <h2 id="intro">1. What this project is</h2>
@@ -460,10 +461,10 @@
 <p>Profiles store bio, location, avatar, freelancer skills/rate/portfolio images/availability, verified-skill tags (admin-set), or client company name. Public client pages list that company’s projects.</p>
 
 <h3>9.2 Projects and search</h3>
-<p>Browse keeps <code>q</code>, category, pricing type (fixed/hourly), due-soon, and page in the URL. Cards show <strong>Fixed price</strong>, <strong>Fixed · N milestones</strong>, or <strong>Hourly</strong>. Project detail lists the planned milestone table. Talent browse keeps hourly-rate bounds in the URL. Matching score is skill overlap, capped at 100%.</p>
+<p>Browse keeps <code>q</code>, category, pricing type (fixed/hourly), due-soon, sort (newest / highest budget / due soonest), and page in the URL. Cards show <strong>Fixed price</strong>, <strong>Fixed · N milestones</strong>, or <strong>Hourly</strong>, plus pending bid counts and a relative due date (<code>due in 3d</code> / <code>overdue 2d</code>). Project detail lists the planned milestone table and a <strong>Similar open work</strong> strip from <code>GET /projects/:id/similar</code> (same category or overlapping skills). Clients see pending bid counts on My projects and can <strong>Duplicate</strong> any brief into a fresh open listing (new deadline, no hire). Talent browse keeps hourly-rate bounds in the URL. Matching score is skill overlap, capped at 100%.</p>
 
 <h3>9.3 Proposals and shortlist</h3>
-<p>Cover letter, bid amount, estimated days. Clients star pending proposals. Inbox sorts shortlisted first.</p>
+<p>Cover letter (counted out of 4000), bid amount, estimated days. The bid form warns when the amount is above <code>budgetMax</code>. Clients star pending proposals. The compare table can sort by shortlist, lowest bid, fastest delivery, or skill match, and flags over-budget rows.</p>
 
 <h3>9.4 Work, deliverables, revisions, disputes</h3>
 <p>Submit-work is multipart (PDF, ZIP, PNG, JPEG, WebP, 8 MB, up to 8 files). Files persist to disk or S3. The work card can Approve the whole job, release one milestone, approve hourly time against the escrow cap, Request revision, or Cancel &amp; refund remaining escrow. Partial payouts live on <code>Payment.releasedAmount</code> — there is still one payment row per contract.</p>
@@ -475,7 +476,7 @@
 <p>Unread count is threads whose latest message is not in <code>readBy</code>. Presence is a <strong>set of socket ids per user</strong> so a second tab does not kick the first offline. Chat notifications fire only if the other party is offline. Typing events stay inside the conversation room.</p>
 
 <h3>9.7 Notifications</h3>
-<p>Proposal received/accepted/rejected, work submitted, revision requested, contract completed, contract cancelled, review received, report updates. Alerts use a keyboard-focusable disclosure and <code>aria-live</code> unread counts. Success toasts use <code>aria-live="polite"</code>.</p>
+<p>Proposal received/accepted/rejected, work submitted, revision requested, contract completed, contract cancelled, review received, report updates. Alerts use a keyboard-focusable disclosure and <code>aria-live</code> unread counts. The inbox can <strong>Mark all read</strong>. Success toasts use <code>aria-live="polite"</code>.</p>
 
 <h3>9.8 Reports and admin</h3>
 <p>Users report a user or project. Admins review or dismiss (audited). Admins block users (audited), verify skills (audited), and open contracts with escrow status. There is no impersonate control.</p>
@@ -514,12 +515,15 @@
     <tr><td>GET</td><td>/auth/me</td><td>User</td><td>Current user</td></tr>
     <tr><td>GET / POST</td><td>/auth/verify-email, /forgot-password, /reset-password</td><td>Public</td><td>Email flows</td></tr>
     <tr><td>PATCH</td><td>/auth/password</td><td>User</td><td>Change password</td></tr>
-    <tr><td>GET</td><td>/projects</td><td>Optional</td><td>List/filter by q, category, dueSoon, pricingType</td></tr>
+    <tr><td>GET</td><td>/stats</td><td>Public</td><td>Open projects, freelancers, completed jobs, escrow held</td></tr>
+    <tr><td>GET</td><td>/projects</td><td>Optional</td><td>List/filter by q, category, dueSoon, pricingType, sort; each row has <code>proposalCount</code></td></tr>
     <tr><td>GET</td><td>/projects/:id</td><td>Optional</td><td>Project + <code>myProposal</code> for the bidder</td></tr>
+    <tr><td>GET</td><td>/projects/:id/similar</td><td>Optional</td><td>Nearby open listings by category or skills</td></tr>
+    <tr><td>POST</td><td>/projects/:id/duplicate</td><td>Owner</td><td>Fresh open copy of the brief</td></tr>
     <tr><td>POST</td><td>/contracts/:id/milestones/:mid/release</td><td>Client</td><td>Partial escrow release</td></tr>
     <tr><td>POST</td><td>/contracts/:id/time-entries/:tid/approve</td><td>Client</td><td>Hourly hours against the cap</td></tr>
     <tr><td>POST</td><td>/contracts/:id/cancel</td><td>Party</td><td>{ reason } → refund held escrow</td></tr>
-    <tr><td>GET</td><td>/payments/me, /payments/mode</td><td>User</td><td>Ledger; <code>simulated</code> vs <code>stripe</code></td></tr>
+    <tr><td>GET</td><td>/payments/me, /payments/me.csv, /payments/mode</td><td>User</td><td>Ledger JSON or CSV; <code>simulated</code> vs <code>stripe</code></td></tr>
     <tr><td>POST</td><td>/payments/webhook</td><td>Stripe signature</td><td>Ignored unless secrets are set</td></tr>
     <tr><td>GET</td><td>/admin/contracts, /admin/audit</td><td>Admin</td><td>Escrow and audit log</td></tr>
     <tr><td>PATCH</td><td>/admin/users/:id/verify-skills</td><td>Admin</td><td>Verified skill tags</td></tr>
@@ -571,8 +575,8 @@
 </div>
 
 <h2 id="quality">14. Tests, CI, and quality</h2>
-<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has 11 cases: register/login, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, and pricing-type list filter.</p>
-<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (including pricing labels). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
+<p><code>cd server &amp;&amp; npm test</code> runs node:test + supertest against <code>freelancehub_test</code> (or <code>MONGO_URI_TEST</code>). The suite has 16 cases: register/login, public marketplace stats, unique proposal + rebid after withdraw, accept → contract + held payment, complete blocked without submission, revision clearing <code>workSubmittedAt</code>, cancel → refunded, <code>myProposal</code> on project detail, incremental milestone release, hourly time against the cap, chat attachment, CSRF skip for Bearer, invite-to-bid owner check, pricing-type list filter, budget sort, pending bid counts + similar projects, CSV ledger export, and project duplicate (owner-only).</p>
+<p><code>cd client &amp;&amp; npm test</code> runs Vitest on format helpers (INR, pricing labels, relative times, due dates). <code>cd client &amp;&amp; npm run e2e</code> is Playwright: a hire-loop smoke (register → post → bid → accept → submit) plus viva smokes (home copy, hourly filter, 404, Priya dashboard Scan MVP). GitHub Actions on <code>main</code> starts Mongo 7, runs server lint/test, then client lint/test/build, then Playwright.</p>
 
 <h2 id="setup">15. Local setup and demo</h2>
 <h3>Prerequisites</h3>
@@ -599,7 +603,7 @@ cd client && npm install && npm run dev</pre>
 </table>
 <h3>Ten-minute walkthrough</h3>
 <ol>
-  <li>Home page → <strong>Viva demo login</strong> → Priya chip → Sign in.</li>
+  <li>Home page live stats (open jobs, talent, completed work, escrow held) → <strong>Viva demo login</strong> → Priya chip → Sign in.</li>
   <li>Dashboard: due-soon landing, Active work says <strong>Ready to release · Scan MVP</strong>.</li>
   <li>Open Active work. Release Scan MVP. Escrow drops by ₹36,000; Offline sync stays held.</li>
   <li>Log out. Login as Aisha. Open the logistics dashboard — <strong>Your proposal / Pending</strong>, not a second form.</li>
@@ -625,7 +629,7 @@ cd client && npm install && npm run dev</pre>
   <li>If port 27017 already has a local MongoDB, Docker’s mapped port will fail or you will see an empty database. Point <code>MONGO_URI</code> at the instance that contains the seed.</li>
 </ul>
 <div class="note">
-  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.1: sequential feature pack, improvement slices, desk pack (milestones, hourly, invites, attachments, CSRF, Playwright), and viva-ready seed/UI.
+  <strong>Source of truth.</strong> This document describes the codebase as of 21 September 2026 on <code>main</code>, version 2.2: sequential feature pack, improvement slices, desk pack, viva seed/UI, and the presentation sprint (live stats, similar jobs, CSV ledger, relative times, bid compare, duplicate brief).
 </div>
 <p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 
@@ -640,7 +644,7 @@ cd client && npm install && npm run dev</pre>
     <tr><td>How do you stop double bids?</td><td>Unique index on <code>{ projectId, freelancerId }</code>. A second pending bid is 409. Withdraw sets <code>withdrawn</code>; the same row can go back to <code>pending</code>.</td></tr>
     <tr><td>Fixed vs hourly?</td><td>Fixed may split into 2–3 milestones that must sum to <code>budgetMax</code>. Hourly holds <code>budgetMax</code> as a cap; approved hours cannot exceed remaining escrow.</td></tr>
     <tr><td>How is chat authorised?</td><td>HTTP messages and socket <code>conversation:join</code> both check that the user is a participant. Join is not an open room id.</td></tr>
-    <tr><td>What is tested?</td><td>11 API tests on a throwaway Mongo database, Vitest for INR/pricing labels, Playwright smoke for the hire loop, GitHub Actions on <code>main</code>.</td></tr>
+    <tr><td>What is tested?</td><td>16 API tests on a throwaway Mongo database, Vitest for INR/pricing/relative dates, Playwright smoke for the hire loop, GitHub Actions on <code>main</code>.</td></tr>
     <tr><td>What would you do next if this shipped?</td><td>Rotate <code>JWT_SECRET</code>, turn off <code>SKIP_EMAIL_VERIFY</code>, put files on S3, turn on Stripe, put Socket.IO on Redis if you run more than one API process.</td></tr>
   </tbody>
 </table>
@@ -648,5 +652,21 @@ cd client && npm install && npm run dev</pre>
   <strong>Demo sentence.</strong> “Priya hired Aisha on a two-slice inventory app. Scan MVP is already submitted. I will release that slice, leave Offline sync held, and show that one Payment row tracks both amounts.”
 </div>
 
+<h2 id="sprint">18. Presentation sprint (v2.2)</h2>
+<p>Added for the viva after the desk pack. Each item has a GitHub commit on <code>main</code> and, where it is an API change, a node:test case.</p>
+<table>
+  <thead><tr><th>Surface</th><th>What to show</th></tr></thead>
+  <tbody>
+    <tr><td>Home</td><td>Live <code>GET /api/stats</code> widgets: open projects, freelancers, completed jobs, escrow held.</td></tr>
+    <tr><td>My projects</td><td>Pending bid counts; Duplicate copies budget, skills, and milestones into a new open listing.</td></tr>
+    <tr><td>Project detail</td><td>Similar open work; cover-letter counter; over-budget bid warning; relative due date.</td></tr>
+    <tr><td>Browse</td><td>Sort by newest, highest budget, or due soonest. Bid counts on cards.</td></tr>
+    <tr><td>Proposals</td><td>Sort by shortlist / lowest bid / fastest / skill match; over-budget flag.</td></tr>
+    <tr><td>Active work</td><td>Status chips: all, active, submitted, completed, cancelled. Relative activity times.</td></tr>
+    <tr><td>Earnings / Payments</td><td>Freelancer earnings and client payments share <code>GET /payments/me.csv</code>.</td></tr>
+    <tr><td>Notifications</td><td>Relative timestamps and Mark all read.</td></tr>
+  </tbody>
+</table>
+<p class="small">FreelanceHub · MERN marketplace · github.com/ShadowAN-AB/Freelance_Marketplace</p>
 </body>
 </html>

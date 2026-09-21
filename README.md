@@ -68,11 +68,12 @@ Compose starts Mongo, the API, and an nginx client on http://localhost:8080. Do 
 
 Password for every seeded account: `Password123!`
 
-1. Home → Viva demo login → Priya chip → Sign in.
+1. Home live stats → Viva demo login → Priya chip → Sign in.
 2. Dashboard shows due-soon work and **Ready to release · Scan MVP**.
-3. Active work → Release Scan MVP (₹36,000). Offline sync stays held.
-4. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
-5. Browse `/projects?pricingType=hourly` for the Node pairing listing.
+3. Active work → filter Submitted → Release Scan MVP (₹36,000). Offline sync stays held.
+4. Payments → Download CSV for the held/released ledger.
+5. Log in as Aisha (`aisha@freelancehub.dev`) to show the pending logistics bid.
+6. Browse `/projects?pricingType=hourly` or sort by highest budget.
 
 ## Layout
 
