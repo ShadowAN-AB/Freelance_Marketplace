@@ -36,6 +36,22 @@ export default function LoginPage() {
         <p className="mt-2 text-muted">
           Demo password <code className="rounded-md bg-saffron px-1.5 py-0.5 font-bold">Password123!</code>
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {[
+            ['Priya · client', 'priya@freelancehub.dev'],
+            ['Aisha · talent', 'aisha@freelancehub.dev'],
+            ['Admin', 'admin@freelancehub.dev'],
+          ].map(([label, email]) => (
+            <button
+              key={email}
+              type="button"
+              className="rounded-full border-2 border-ink/15 bg-paper px-3 py-1 text-xs font-bold"
+              onClick={() => setForm({ email, password: 'Password123!' })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <ErrorText error={error} />
           <Field label="Email">
